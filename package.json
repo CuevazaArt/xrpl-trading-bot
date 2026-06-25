@@ -1,0 +1,29 @@
+{
+  "name": "xrpl-trading-bot",
+  "version": "1.0.0",
+  "description": "Trading bot for XRP Ledger and adjacent networks",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "keywords": [
+    "xrpl",
+    "trading",
+    "bot",
+    "websocket",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "xrpl": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
