@@ -92,7 +92,6 @@ async function main() {
   let cliDash: CLIDashboard | null = null;
   if (flags.cliUi) {
     cliDash = new CLIDashboard();
-    cliDash.start();
   }
 
   // 3. Inicializar cliente XRPL
@@ -225,6 +224,12 @@ async function main() {
   const strategyManager = new XRPLStrategyManager(
     client, wallet, dashboardProxy, paperOrderManager || undefined
   );
+
+  // Iniciar el CLI Dashboard si está activado
+  if (cliDash) {
+    cliDash.start();
+  }
+
   await strategyManager.start();
 
   // 10. Health Monitor (condicional)

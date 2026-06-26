@@ -3,55 +3,6 @@
     {
       "timestamp": "2026-06-26T01:31:58.296Z",
       "type": "TEST",
-      "hash": "hash_10",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
-      "hash": "hash_11",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
-      "hash": "hash_12",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
-      "hash": "hash_13",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
-      "hash": "hash_14",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
-      "hash": "hash_15",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
-      "hash": "hash_16",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T01:31:58.296Z",
-      "type": "TEST",
       "hash": "hash_17",
       "status": "tesSUCCESS",
       "detail": {}
@@ -1399,7 +1350,111 @@
       "hash": "hash_209",
       "status": "tesSUCCESS",
       "detail": {}
+    },
+    {
+      "timestamp": "2026-06-26T20:37:28.608Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T20:39:00.273Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T20:39:21.359Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T20:39:43.398Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T20:40:06.940Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T20:40:58.869Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T20:41:17.365Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
     }
   ],
-  "balances": []
+  "balances": [
+    {
+      "timestamp": "2026-06-26T20:37:23.346Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:38:42.542Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:38:53.816Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:39:15.005Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:39:36.605Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:40:00.511Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:40:53.407Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:41:11.715Z",
+      "xrp": "100",
+      "usd": "0"
+    }
+  ]
 }
