@@ -1,4 +1,7 @@
 import { Client, Wallet, OfferCreate, OfferCancel, SubmittableTransaction, Amount } from 'xrpl';
+import { createLogger } from './logger.js';
+
+const log = createLogger('OrderManager');
 
 export class XRPLOrderManager {
   private client: Client;
@@ -20,13 +23,12 @@ export class XRPLOrderManager {
       const signed = wallet.sign(prepared);
       
       // 3. Enviar y esperar a que sea validada en un ledger cerrado
-      console.log(`Enviando transacción ${txJSON.TransactionType}...`);
+      log.debug(`Enviando transacción ${txJSON.TransactionType}...`);
       const result = await this.client.submitAndWait(signed.tx_blob);
       
       const txResult = (result.result.meta as any)?.TransactionResult;
       if (txResult === 'tesSUCCESS') {
-        console.log(`¡Transacción ${txJSON.TransactionType} exitosa!`);
-        console.log(`Hash de Transacción: ${result.result.hash}`);
+        log.info(`¡Transacción ${txJSON.TransactionType} exitosa! Hash: ${result.result.hash}`);
         return {
           success: true,
           hash: result.result.hash,
@@ -34,11 +36,11 @@ export class XRPLOrderManager {
           result: result
         };
       } else {
-        console.error(`Error en la transacción ${txJSON.TransactionType}: ${txResult}`);
+        log.error(`Error en transacción ${txJSON.TransactionType}: ${txResult}`);
         return { success: false, error: txResult, result: result };
       }
     } catch (error) {
-      console.error(`Excepción al enviar transacción ${txJSON.TransactionType}:`, error);
+      log.error(`Excepción al enviar transacción ${txJSON.TransactionType}:`, error);
       throw error;
     }
   }

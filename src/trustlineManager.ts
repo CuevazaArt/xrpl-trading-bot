@@ -1,9 +1,13 @@
 import { Client, Wallet, TrustSet } from 'xrpl';
 import { XRPLOrderManager } from './orderManager.js';
+import { createLogger } from './logger.js';
+import { config } from './config.js';
+
+const log = createLogger('TrustlineManager');
 
 export class XRPLTrustlineManager {
   private client: Client;
-  private usdIssuer = 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B';
+  private usdIssuer = config.usdIssuer;
 
   constructor(client: Client) {
     this.client = client;
@@ -14,7 +18,7 @@ export class XRPLTrustlineManager {
    * Si no la tiene, crea una transacción TrustSet para establecerla.
    */
   async ensureUsdTrustline(wallet: Wallet): Promise<boolean> {
-    console.log(`Verificando línea de confianza (Trustline) para USD (Emisor: ${this.usdIssuer})...`);
+    log.info(`Verificando línea de confianza (Trustline) para USD (Emisor: ${this.usdIssuer})...`);
     try {
       const response = await this.client.request({
         command: 'account_lines',
@@ -27,11 +31,11 @@ export class XRPLTrustlineManager {
       );
 
       if (hasTrustline) {
-        console.log('Línea de confianza USD ya activa.');
+        log.info('Línea de confianza USD ya activa.');
         return true;
       }
 
-      console.log('No se encontró línea de confianza USD. Creando TrustSet...');
+      log.info('No se encontró línea de confianza USD. Creando TrustSet...');
       
       const trustSetTx: TrustSet = {
         TransactionType: 'TrustSet',
@@ -45,19 +49,19 @@ export class XRPLTrustlineManager {
 
       const prepared = await this.client.autofill(trustSetTx);
       const signed = wallet.sign(prepared);
-      console.log('Enviando transacción TrustSet...');
+      log.debug('Enviando transacción TrustSet...');
       const result = await this.client.submitAndWait(signed.tx_blob);
 
       const txResult = (result.result.meta as any)?.TransactionResult;
       if (txResult === 'tesSUCCESS') {
-        console.log('¡Línea de confianza USD creada con éxito!');
+        log.info('¡Línea de confianza USD creada con éxito!');
         return true;
       } else {
-        console.error(`Error al crear la línea de confianza: ${txResult}`);
+        log.error(`Error al crear la línea de confianza: ${txResult}`);
         return false;
       }
     } catch (error) {
-      console.error('Excepción al configurar la línea de confianza:', error);
+      log.error('Excepción al configurar la línea de confianza:', error);
       return false;
     }
   }
@@ -67,7 +71,7 @@ export class XRPLTrustlineManager {
    * Esto nos proveerá de USD iniciales para poder operar en ambas direcciones.
    */
   async performInitialSwap(wallet: Wallet, xrpToSell: number, expectedUsdPrice: number) {
-    console.log(`Ejecutando swap inicial: Vendiendo ${xrpToSell} XRP para comprar USD...`);
+    log.info(`Ejecutando swap inicial: Vendiendo ${xrpToSell} XRP para comprar USD...`);
     
     const orderManager = new XRPLOrderManager(this.client);
     
@@ -84,15 +88,15 @@ export class XRPLTrustlineManager {
     };
 
     try {
-      console.log(`Enviando orden de mercado para obtener al menos ${usdValue} USD...`);
+      log.debug(`Enviando orden de mercado para obtener al menos ${usdValue} USD...`);
       const result = await orderManager.createMarketOrder(wallet, takerPays, takerGets);
       if (result.success) {
-        console.log(`¡Swap inicial completado! Hash: ${result.hash}`);
+        log.info(`¡Swap inicial completado! Hash: ${result.hash}`);
       } else {
-        console.warn(`No se pudo realizar el swap inicial: ${result.error}. Es posible que no haya liquidez en el DEX de Testnet.`);
+        log.warn(`No se pudo realizar el swap inicial: ${result.error}. Es posible que no haya liquidez en el DEX de Testnet.`);
       }
     } catch (error) {
-      console.error('Error durante el swap inicial:', error);
+      log.error('Error durante el swap inicial:', error);
     }
   }
 }

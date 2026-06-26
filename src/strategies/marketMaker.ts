@@ -2,10 +2,8 @@ import { Client, Wallet } from 'xrpl';
 import { XRPLOrderManager } from '../orderManager.js';
 import { XRPLDashboard } from '../dashboard.js';
 import { db } from '../db.js';
-import { createLogger } from '../logger.js';
-import { IStrategy } from './IStrategy.js';
-
-const log = createLogger('MarketMakerStrategy');
+import { config } from '../config.js';
+import { AbstractStrategy } from './AbstractStrategy.js';
 
 interface ActiveOrder {
   sequence: number;
@@ -13,23 +11,18 @@ interface ActiveOrder {
   ledgerPlaced: number;
 }
 
-export class XRPLMarketMakerStrategy implements IStrategy {
+export class XRPLMarketMakerStrategy extends AbstractStrategy {
   public readonly name = 'market_maker';
-  
-  private client!: Client;
-  private wallet!: Wallet;
-  private orderManager!: XRPLOrderManager;
-  private dashboard!: XRPLDashboard;
 
-  // === Parámetros de la estrategia ===
-  private baseSpread = 0.01;        // 1% base spread
-  private minSpread = 0.005;        // 0.5% mínimo
-  private maxSpread = 0.02;         // 2% máximo
-  private orderAmountXRP = '10';    // Comerciar de a 10 XRP
-  private priceDeviationThreshold = 0.003; // 0.3% desviación para recolocar
-  private cooldownLedgers = 3;      // Mínimo de 3 ledgers entre recolocaciones
-  private maxPositionXRP = 80;      // Máximo de XRP que queremos mantener
-  private targetPositionXRP = 50;   // Posición neutral objetivo
+  // === Parámetros de la estrategia (desde config / env vars) ===
+  private baseSpread = config.mmBaseSpread;
+  private minSpread = config.mmMinSpread;
+  private maxSpread = config.mmMaxSpread;
+  private orderAmountXRP = config.mmOrderAmountXrp.toString();
+  private priceDeviationThreshold = config.mmPriceDeviationThreshold;
+  private cooldownLedgers = config.mmCooldownLedgers;
+  private maxPositionXRP = config.mmMaxPositionXrp;
+  private targetPositionXRP = config.mmTargetPositionXrp;
 
   // === Estado de órdenes activas ===
   private activeBuy: ActiveOrder | null = null;
@@ -40,22 +33,9 @@ export class XRPLMarketMakerStrategy implements IStrategy {
   private lastReplaceLedger: number = 0;
   private currentLedger: number = 0;
 
-  // Emisor de USD
-  private usdIssuer = 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B';
-
-  async init(
-    client: Client,
-    wallet: Wallet,
-    orderManager: XRPLOrderManager,
-    dashboard: XRPLDashboard
-  ): Promise<void> {
-    this.client = client;
-    this.wallet = wallet;
-    this.orderManager = orderManager;
-    this.dashboard = dashboard;
-
+  protected async onInit(): Promise<void> {
     this.dashboard.updateState({
-      walletAddress: wallet.address,
+      walletAddress: this.wallet.address,
       strategyName: 'Market Maker (MM)'
     });
   }
@@ -71,36 +51,31 @@ export class XRPLMarketMakerStrategy implements IStrategy {
     const bestAsk = marketPrice * 1.001;
     const midPrice = marketPrice;
 
-    log.info(`MM Precios: Bid=${bestBid.toFixed(4)} | Ask=${bestAsk.toFixed(4)} | Medio=${midPrice.toFixed(4)} USD`);
+    this.log.info(`MM Precios: Bid=${bestBid.toFixed(4)} | Ask=${bestAsk.toFixed(4)} | Medio=${midPrice.toFixed(4)} USD`);
 
     // 3. Calcular spread dinámico basado en volatilidad
     const dynamicSpread = this.calculateDynamicSpread(midPrice);
-    log.debug(`MM Spread dinámico: ${(dynamicSpread * 100).toFixed(2)}%`);
+    this.log.debug(`MM Spread dinámico: ${(dynamicSpread * 100).toFixed(2)}%`);
 
     // 4. Calcular sesgo de inventario
     const inventoryBias = await this.calculateInventoryBias();
-    log.debug(`MM Sesgo de inventario: ${(inventoryBias * 100).toFixed(2)}%`);
+    this.log.debug(`MM Sesgo de inventario: ${(inventoryBias * 100).toFixed(2)}%`);
 
     // 5. Calcular precios objetivo con spread + sesgo
     const targetBuyPrice = midPrice * (1 - dynamicSpread / 2 + inventoryBias);
     const targetSellPrice = midPrice * (1 + dynamicSpread / 2 + inventoryBias);
 
-    log.info(`MM Objetivos: Compra=${targetBuyPrice.toFixed(4)} | Venta=${targetSellPrice.toFixed(4)} USD`);
+    this.log.info(`MM Objetivos: Compra=${targetBuyPrice.toFixed(4)} | Venta=${targetSellPrice.toFixed(4)} USD`);
 
     // 6. ¿Debemos cancelar y recolocar?
     const shouldReplace = this.shouldReplaceOrders(midPrice, targetBuyPrice, targetSellPrice);
 
     if (shouldReplace) {
-      // Cancelar órdenes activas
       await this.cancelActiveOrders();
-      
-      // Colocar nuevas órdenes
       await this.placeBuyOrder(targetBuyPrice);
       await this.placeSellOrder(targetSellPrice);
-      
       this.lastReplaceLedger = this.currentLedger;
     } else {
-      // Colocar solo las que falten (fueron filled o nunca se colocaron)
       if (this.activeBuy === null) {
         await this.placeBuyOrder(targetBuyPrice);
       }
@@ -111,11 +86,20 @@ export class XRPLMarketMakerStrategy implements IStrategy {
 
     // 7. Actualizar métricas
     this.lastPrice = midPrice;
-    await this.updateBalancesAndDashboard(midPrice, targetBuyPrice, targetSellPrice);
+    await this.updateDashboardWithBalances({
+      midPrice: midPrice.toString(),
+      buyTarget: targetBuyPrice.toString(),
+      sellTarget: targetSellPrice.toString(),
+      activeBuySeq: this.activeBuy !== null ? this.activeBuy.sequence.toString() : 'Ninguna',
+      activeSellSeq: this.activeSell !== null ? this.activeSell.sequence.toString() : 'Ninguna',
+      strategyName: 'Market Maker (MM)',
+      activeRungs: 'N/A (MM)',
+      botStatus: 'Operando normalmente'
+    });
   }
 
   async cleanup(): Promise<void> {
-    log.info('Limpiando órdenes activas de Market Maker...');
+    this.log.info('Limpiando órdenes activas de Market Maker...');
     await this.cancelActiveOrders();
   }
 
@@ -135,7 +119,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
       );
 
       if (this.activeBuy && !activeSequences.has(this.activeBuy.sequence)) {
-        log.info(`¡Orden de COMPRA (Seq: ${this.activeBuy.sequence}) fue ejecutada (FILLED)!`);
+        this.log.info(`¡Orden de COMPRA (Seq: ${this.activeBuy.sequence}) fue ejecutada (FILLED)!`);
         db.logTransaction('COMPRA_FILLED', '', 'FILLED', {
           sequence: this.activeBuy.sequence,
           price: this.activeBuy.price
@@ -144,7 +128,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
       }
 
       if (this.activeSell && !activeSequences.has(this.activeSell.sequence)) {
-        log.info(`¡Orden de VENTA (Seq: ${this.activeSell.sequence}) fue ejecutada (FILLED)!`);
+        this.log.info(`¡Orden de VENTA (Seq: ${this.activeSell.sequence}) fue ejecutada (FILLED)!`);
         db.logTransaction('VENTA_FILLED', '', 'FILLED', {
           sequence: this.activeSell.sequence,
           price: this.activeSell.price
@@ -152,7 +136,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
         this.activeSell = null;
       }
     } catch (error) {
-      log.error('Error al verificar fills (account_offers):', error);
+      this.log.error('Error al verificar fills (account_offers):', error);
     }
   }
 
@@ -172,7 +156,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
     if (this.activeBuy) {
       const buyDeviation = Math.abs(currentPrice - this.activeBuy.price) / this.activeBuy.price;
       if (buyDeviation > this.priceDeviationThreshold) {
-        log.info(`Desviación de compra: ${(buyDeviation * 100).toFixed(2)}% > ${(this.priceDeviationThreshold * 100).toFixed(2)}% → Recolocando`);
+        this.log.info(`Desviación de compra: ${(buyDeviation * 100).toFixed(2)}% > ${(this.priceDeviationThreshold * 100).toFixed(2)}% → Recolocando`);
         return true;
       }
     }
@@ -180,7 +164,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
     if (this.activeSell) {
       const sellDeviation = Math.abs(currentPrice - this.activeSell.price) / this.activeSell.price;
       if (sellDeviation > this.priceDeviationThreshold) {
-        log.info(`Desviación de venta: ${(sellDeviation * 100).toFixed(2)}% > ${(this.priceDeviationThreshold * 100).toFixed(2)}% → Recolocando`);
+        this.log.info(`Desviación de venta: ${(sellDeviation * 100).toFixed(2)}% > ${(this.priceDeviationThreshold * 100).toFixed(2)}% → Recolocando`);
         return true;
       }
     }
@@ -228,27 +212,27 @@ export class XRPLMarketMakerStrategy implements IStrategy {
 
   private async cancelActiveOrders() {
     if (this.activeBuy) {
-      log.info(`Cancelando orden de compra activa (Seq: ${this.activeBuy.sequence})...`);
+      this.log.info(`Cancelando orden de compra activa (Seq: ${this.activeBuy.sequence})...`);
       try {
         const result = await this.orderManager.cancelOrder(this.wallet, this.activeBuy.sequence);
         db.logTransaction('CANCELAR_COMPRA', result.hash || '', result.success ? 'tesSUCCESS' : (result.error || 'ERROR'), {
           sequence: this.activeBuy.sequence
         });
       } catch (error) {
-        log.error('Error al cancelar orden de compra:', error);
+        this.log.error('Error al cancelar orden de compra:', error);
       }
       this.activeBuy = null;
     }
 
     if (this.activeSell) {
-      log.info(`Cancelando orden de venta activa (Seq: ${this.activeSell.sequence})...`);
+      this.log.info(`Cancelando orden de venta activa (Seq: ${this.activeSell.sequence})...`);
       try {
         const result = await this.orderManager.cancelOrder(this.wallet, this.activeSell.sequence);
         db.logTransaction('CANCELAR_VENTA', result.hash || '', result.success ? 'tesSUCCESS' : (result.error || 'ERROR'), {
           sequence: this.activeSell.sequence
         });
       } catch (error) {
-        log.error('Error al cancelar orden de venta:', error);
+        this.log.error('Error al cancelar orden de venta:', error);
       }
       this.activeSell = null;
     }
@@ -265,7 +249,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
       issuer: this.usdIssuer
     };
 
-    log.info(`Colocando COMPRA MM: ${xrpAmount} XRP a ${priceUsd.toFixed(4)} USD (Costo: ${usdValue} USD)`);
+    this.log.info(`Colocando COMPRA MM: ${xrpAmount} XRP a ${priceUsd.toFixed(4)} USD (Costo: ${usdValue} USD)`);
     try {
       const result = await this.orderManager.createLimitOrder(this.wallet, takerPays, takerGets);
       
@@ -280,7 +264,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
         db.logTransaction('COMPRA_LIMITE', '', result.error || 'ERROR_DESCONOCIDO', { price: priceUsd, amount: xrpAmount });
       }
     } catch (error) {
-      log.error('Excepción al colocar orden de compra:', error);
+      this.log.error('Excepción al colocar orden de compra:', error);
     }
   }
 
@@ -295,7 +279,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
     };
     const takerGets = (xrpAmount * 1000000).toString(); // XRP en drops
 
-    log.info(`Colocando VENTA MM: ${xrpAmount} XRP a ${priceUsd.toFixed(4)} USD (Retorno: ${usdValue} USD)`);
+    this.log.info(`Colocando VENTA MM: ${xrpAmount} XRP a ${priceUsd.toFixed(4)} USD (Retorno: ${usdValue} USD)`);
     try {
       const result = await this.orderManager.createLimitOrder(this.wallet, takerPays, takerGets);
       
@@ -310,41 +294,7 @@ export class XRPLMarketMakerStrategy implements IStrategy {
         db.logTransaction('VENTA_LIMITE', '', result.error || 'ERROR_DESCONOCIDO', { price: priceUsd, amount: xrpAmount });
       }
     } catch (error) {
-      log.error('Excepción al colocar orden de venta:', error);
-    }
-  }
-
-  private async updateBalancesAndDashboard(midPrice: number, buyTarget: number, sellTarget: number) {
-    try {
-      const xrpBalanceRaw = await this.client.getXrpBalance(this.wallet.address);
-      const xrpBalance = String(xrpBalanceRaw);
-      
-      let usdBalance = '0';
-      const linesResponse = await this.client.request({
-        command: 'account_lines',
-        account: this.wallet.address
-      });
-      const usdLine = linesResponse.result.lines.find((line: any) => line.currency === 'USD' && line.account === this.usdIssuer);
-      if (usdLine) {
-        usdBalance = usdLine.balance;
-      }
-
-      db.logBalance(xrpBalance, usdBalance);
-
-      this.dashboard.updateState({
-        xrpBalance,
-        usdBalance,
-        midPrice: midPrice.toString(),
-        buyTarget: buyTarget.toString(),
-        sellTarget: sellTarget.toString(),
-        activeBuySeq: this.activeBuy !== null ? this.activeBuy.sequence.toString() : 'Ninguna',
-        activeSellSeq: this.activeSell !== null ? this.activeSell.sequence.toString() : 'Ninguna',
-        strategyName: 'Market Maker (MM)',
-        activeRungs: 'N/A (MM)',
-        botStatus: 'Operando normalmente'
-      });
-    } catch (error) {
-      log.error('Error al actualizar balances en el dashboard:', error);
+      this.log.error('Excepción al colocar orden de venta:', error);
     }
   }
 }

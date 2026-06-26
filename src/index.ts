@@ -7,6 +7,12 @@ import { XRPLDashboard } from './dashboard.js';
 import { XRPLTrustlineManager } from './trustlineManager.js';
 import { db } from './db.js';
 import { createLogger } from './logger.js';
+import { flags, printFlagsSummary } from './cliFlags.js';
+import { PaperOrderManager } from './paperTrading.js';
+import { HealthMonitor } from './healthMonitor.js';
+import { TelegramNotifier } from './telegramNotifier.js';
+import { CLIDashboard } from './cliDashboard.js';
+import { MultiOracle } from './multiOracle.js';
 
 const log = createLogger('Main');
 
@@ -55,16 +61,44 @@ function setupReconnection(client: Client, onReconnected: () => Promise<void>) {
 
 async function main() {
   log.info('Iniciando bot de trading XRPL...');
+  printFlagsSummary(flags);
 
-  // 1. Inicializar y Arrancar Dashboard Web
-  const dashboard = new XRPLDashboard();
-  dashboard.start();
-  
-  // 2. Inicializar cliente ÚNICO global
+  // ─── DRY RUN: mostrar config y salir ───
+  if (flags.dryRun) {
+    log.info('═══ DRY RUN — Configuración actual ═══');
+    log.info(`Estrategia: ${config.strategy}`);
+    log.info(`XRPL WS: ${config.xrplWsUrl}`);
+    log.info(`Paper Trading: ${flags.paperTrading ? `SI ($${flags.simBalance})` : 'NO'}`);
+    log.info(`Telegram: ${flags.telegram ? `SI (cada ${flags.telegramInterval}s)` : 'NO'}`);
+    log.info(`Dashboard Web: ${flags.noDashboard ? 'NO' : `SI (puerto ${config.dashboardPort})`}`);
+    log.info(`CLI UI: ${flags.cliUi ? 'SI' : 'NO'}`);
+    log.info('═══ Fin de Dry Run ═══');
+    process.exit(0);
+  }
+
+  // 1. Dashboard Web (condicional)
+  let dashboard: XRPLDashboard | null = null;
+  if (!flags.noDashboard) {
+    dashboard = new XRPLDashboard();
+    dashboard.start();
+  } else {
+    log.info('Dashboard web desactivado (--no-dashboard)');
+  }
+  // Crear un dashboard dummy si está desactivado (para no romper las interfaces)
+  const dashboardProxy = dashboard || new XRPLDashboard();
+
+  // 2. CLI Dashboard (condicional)
+  let cliDash: CLIDashboard | null = null;
+  if (flags.cliUi) {
+    cliDash = new CLIDashboard();
+    cliDash.start();
+  }
+
+  // 3. Inicializar cliente XRPL
   const client = new Client(config.xrplWsUrl);
   await connectWithRetry(client);
 
-  // 3. Inicializar Wallet Manager
+  // 4. Inicializar Wallet Manager
   const walletManager = new XRPLWalletManager(client);
   await walletManager.initializeWallet(config.walletSeed);
   const wallet = walletManager.getWallet();
@@ -74,7 +108,7 @@ async function main() {
     process.exit(1);
   }
 
-  // 4. Consultar balances
+  // 5. Consultar balances
   const xrpBalance = await walletManager.getXrpBalance();
   log.info(`Saldo de XRP: ${xrpBalance} XRP`);
 
@@ -91,22 +125,17 @@ async function main() {
   } else {
     log.info('Sin líneas de confianza / balances de tokens activos.');
   }
-
-  // Guardar balance inicial en la base de datos
   db.logBalance(xrpBalance, usdBalance);
 
-  // 5. Configurar Trustline de USD
+  // 6. Configurar Trustline de USD
   const trustlineManager = new XRPLTrustlineManager(client);
   const trustlineOk = await trustlineManager.ensureUsdTrustline(wallet);
   
   if (trustlineOk) {
     db.logTransaction('TRUSTLINE_USD', '', 'tesSUCCESS', { detail: 'Línea de confianza USD Bitstamp configurada' });
-    // Si tenemos 0 USD, intentamos hacer un swap inicial de 20 XRP para fondear el lado de compras
     if (parseFloat(usdBalance) === 0) {
       log.info('Saldo de USD en cero. Ejecutando swap inicial para obtener dólares de prueba...');
       await trustlineManager.performInitialSwap(wallet, 20, 1.04);
-      
-      // Actualizar balances tras el swap
       const updatedXrp = await walletManager.getXrpBalance();
       const updatedTokens = await walletManager.getTokensBalances();
       const updatedUsd = updatedTokens.find(t => t.currency === 'USD')?.balance || '0';
@@ -116,40 +145,125 @@ async function main() {
     log.warn('Advertencia: No se pudo verificar/crear la línea de confianza USD. Las órdenes de compra fallarán.');
   }
 
-  // 6. Iniciar WebSocket Reader (usa el mismo client, NO crea nueva conexión)
+  // 7. WebSocket Reader
   const reader = new XRPLWebsocketReader(client);
   reader.setWalletAddress(wallet.address);
-
-  // Función para restaurar suscripciones tras una reconexión
-  const restoreSubscriptions = async () => {
-    try {
-      await reader.start();
-      log.info('Suscripciones WebSocket restauradas.');
-    } catch (error) {
-      log.error('Error al restaurar suscripciones WebSocket:', error);
-    }
-  };
-
-  // 7. Configurar reconexión automática
-  setupReconnection(client, restoreSubscriptions);
-
-  // 8. Arrancar suscripciones por primera vez
   try {
     await reader.start();
   } catch (error) {
     log.error('Error al iniciar el lector WebSocket:', error);
   }
 
-  // 9. Instanciar e Iniciar la Estrategia de Market Making
-  const strategyManager = new XRPLStrategyManager(client, wallet, dashboard);
+  // 8. Paper Trading (condicional) — inyectar PaperOrderManager
+  let paperOrderManager: PaperOrderManager | null = null;
+  if (flags.paperTrading) {
+    paperOrderManager = new PaperOrderManager(client, flags.simBalance, config.strategy);
+    log.info(`📝 Modo Paper Trading activado. Capital simulado: $${flags.simBalance} USDT`);
+  }
+
+  // 9. Strategy Manager
+  const strategyManager = new XRPLStrategyManager(
+    client, wallet, dashboardProxy, paperOrderManager || undefined
+  );
   await strategyManager.start();
 
-  // Manejo de apagado controlado (Graceful shutdown)
+  // 10. Health Monitor (condicional)
+  let healthMonitor: HealthMonitor | null = null;
+  let telegram: TelegramNotifier | null = null;
+
+  if (flags.telegram || flags.cliUi) {
+    healthMonitor = new HealthMonitor(client);
+
+    // Inyectar MultiOracle compartido
+    const sharedOracle = new MultiOracle();
+    healthMonitor.setOracle(sharedOracle);
+
+    // Funds fetcher
+    healthMonitor.setFundsFetcher(async () => {
+      try {
+        const xrp = parseFloat(await walletManager.getXrpBalance()) || 0;
+        const usdLine = (await walletManager.getTokensBalances()).find(t => t.currency === 'USD');
+        const usd = usdLine ? parseFloat(usdLine.balance) : 0;
+        const xrpPrice = (await sharedOracle.getConsensusPrice())?.price || 0;
+        return {
+          dex: { xrp, usd },
+          cex: { xrp: 0, usdt: 0 }, // CEX requiere API keys
+          totalValueUsdt: (xrp * xrpPrice) + usd,
+        };
+      } catch {
+        return { dex: { xrp: 0, usd: 0 }, cex: { xrp: 0, usdt: 0 }, totalValueUsdt: 0 };
+      }
+    });
+
+    // Paper trading fetcher
+    if (paperOrderManager) {
+      healthMonitor.setPaperFetcher(() => {
+        const db = paperOrderManager!.getDB();
+        const p = db.getPortfolio();
+        const m = db.getMetrics();
+        return {
+          portfolioUsdt: p.totalValueUsdt,
+          pnlUsdt: p.pnlUsdt,
+          pnlPct: p.pnlPct,
+          totalTrades: m.totalTrades,
+          winRate: m.winRate,
+        };
+      });
+    }
+
+    // Telegram
+    if (flags.telegram) {
+      telegram = new TelegramNotifier();
+      if (telegram.isConfigured()) {
+        healthMonitor.setTelegram(telegram);
+        const activeFeatures: string[] = [];
+        if (flags.paperTrading) activeFeatures.push('Paper Trading');
+        if (flags.cliUi) activeFeatures.push('CLI Dashboard');
+        if (!flags.noDashboard) activeFeatures.push('Web Dashboard');
+        await telegram.sendStartup(config.strategy, activeFeatures);
+      } else {
+        log.warn('Telegram solicitado (--telegram) pero TELEGRAM_BOT_TOKEN/CHAT_ID no configurados.');
+      }
+    }
+
+    // Conectar health monitor al strategy manager para updates por tick
+    strategyManager.setHealthMonitor(healthMonitor);
+
+    // Conectar CLI dashboard al health monitor
+    if (cliDash) {
+      strategyManager.setCliDashboard(cliDash);
+    }
+
+    // Iniciar timer periódico
+    const interval = flags.telegram ? flags.telegramInterval : config.healthIntervalSeconds;
+    healthMonitor.start(interval);
+  }
+
+  // Reconexión automática
+  const restoreSubscriptions = async () => {
+    try {
+      await reader.start();
+      await strategyManager.resubscribeLedger();
+      log.info('Suscripciones WebSocket y ledger stream restaurados.');
+    } catch (error) {
+      log.error('Error al restaurar suscripciones WebSocket:', error);
+    }
+  };
+  setupReconnection(client, restoreSubscriptions);
+
+  // Graceful shutdown
+  const startTime = Date.now();
   const gracefulShutdown = async () => {
     log.info('Recibida señal de apagado. Limpiando recursos...');
     try {
       await strategyManager.cancelAllOrders();
-      dashboard.stop();
+      if (healthMonitor) healthMonitor.stop();
+      if (cliDash) cliDash.stop();
+      if (dashboard) dashboard.stop();
+      if (telegram?.isConfigured()) {
+        const uptime = Math.floor((Date.now() - startTime) / 1000);
+        await telegram.sendShutdown(uptime);
+      }
       await client.disconnect();
       log.info('Apagado completado con éxito.');
       process.exit(0);

@@ -1,6 +1,7 @@
 import { Client } from 'xrpl';
 import { EventEmitter } from 'events';
 import { createLogger } from './logger.js';
+import { config } from './config.js';
 
 const log = createLogger('WebSocketReader');
 
@@ -88,7 +89,7 @@ export class XRPLWebsocketReader extends EventEmitter {
    * Se suscribe al libro de órdenes XRP/USD (Bitstamp).
    */
   private async subscribeToOrderBook() {
-    const usdIssuer = 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B';
+    const usdIssuer = config.usdIssuer;
 
     try {
       this.client.connection.on('transaction', (tx) => {

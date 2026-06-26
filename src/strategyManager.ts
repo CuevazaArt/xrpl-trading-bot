@@ -4,6 +4,10 @@ import { XRPLDashboard } from './dashboard.js';
 import { createLogger } from './logger.js';
 import { config } from './config.js';
 import { createStrategy, IStrategy } from './strategies/index.js';
+import { MultiOracle } from './multiOracle.js';
+import { PaperOrderManager } from './paperTrading.js';
+import { HealthMonitor } from './healthMonitor.js';
+import { CLIDashboard } from './cliDashboard.js';
 
 const log = createLogger('StrategyManager');
 
@@ -12,6 +16,7 @@ export class XRPLStrategyManager {
   private wallet: Wallet;
   private orderManager: XRPLOrderManager;
   private dashboard: XRPLDashboard;
+  private multiOracle: MultiOracle;
 
   // Estrategia activa cargada desde la fábrica
   private strategy: IStrategy;
@@ -19,16 +24,50 @@ export class XRPLStrategyManager {
   // Estado del ledger
   private currentLedger: number = 0;
   private tickCount: number = 0;
+  private tickInProgress: boolean = false;
 
-  constructor(client: Client, wallet: Wallet, dashboard: XRPLDashboard) {
+  // Observadores opcionales (inyectados desde index.ts)
+  private healthMonitor: HealthMonitor | null = null;
+  private cliDash: CLIDashboard | null = null;
+  private paperOrderManager: PaperOrderManager | null = null;
+
+  constructor(
+    client: Client,
+    wallet: Wallet,
+    dashboard: XRPLDashboard,
+    paperOrderManager?: PaperOrderManager
+  ) {
     this.client = client;
     this.wallet = wallet;
     this.dashboard = dashboard;
-    this.orderManager = new XRPLOrderManager(client);
+    this.multiOracle = new MultiOracle();
+
+    // Paper trading: inyectar PaperOrderManager en vez del real
+    if (paperOrderManager) {
+      this.orderManager = paperOrderManager;
+      this.paperOrderManager = paperOrderManager;
+      log.info('📝 OrderManager: usando PaperOrderManager (modo simulado)');
+    } else {
+      this.orderManager = new XRPLOrderManager(client);
+    }
 
     // Cargar la estrategia activa según la variable de entorno STRATEGY
     log.info(`Cargando estrategia: '${config.strategy}'`);
     this.strategy = createStrategy(config.strategy);
+  }
+
+  /**
+   * Inyecta el health monitor para updates por tick.
+   */
+  setHealthMonitor(monitor: HealthMonitor): void {
+    this.healthMonitor = monitor;
+  }
+
+  /**
+   * Inyecta el CLI dashboard para rendering en cada tick.
+   */
+  setCliDashboard(cliDash: CLIDashboard): void {
+    this.cliDash = cliDash;
   }
 
   /**
@@ -40,25 +79,35 @@ export class XRPLStrategyManager {
     // Inicializar la estrategia cargada
     await this.strategy.init(this.client, this.wallet, this.orderManager, this.dashboard);
 
-    // Suscribirse al stream de ledgers para recibir los eventos
-    try {
-      await this.client.request({
-        command: 'subscribe',
-        streams: ['ledger']
-      });
-    } catch (error) {
-      log.error('Error al suscribirse al stream de ledgers en el orquestador:', error);
-    }
+    // Suscribirse al stream de ledgers
+    await this.resubscribeLedger();
 
     // Escuchar cierres de ledger para ejecutar la reevaluación periódica (tick)
+    // El listener se agrega UNA sola vez aquí. resubscribeLedger() solo re-envía
+    // el comando 'subscribe' al server sin agregar listeners duplicados.
     this.client.connection.on('ledgerClosed', async (ledger) => {
+      // Guard: verificar conexión activa
+      if (!this.client.isConnected()) {
+        log.warn('Evento ledgerClosed recibido pero client desconectado. Saltando tick.');
+        return;
+      }
+
+      // Guard: evitar ticks concurrentes (si el anterior no terminó)
+      if (this.tickInProgress) {
+        log.warn(`Tick anterior aún en progreso. Saltando ledger #${ledger.ledger_index}.`);
+        return;
+      }
+
       this.currentLedger = ledger.ledger_index;
       this.tickCount++;
+      this.tickInProgress = true;
       log.info(`--- Tick #${this.tickCount} en Ledger #${this.currentLedger} [Bot: ${this.strategy.name}] ---`);
       try {
         await this.tick();
       } catch (error) {
         log.error(`Error durante el tick de la estrategia '${this.strategy.name}':`, error);
+      } finally {
+        this.tickInProgress = false;
       }
     });
   }
@@ -67,38 +116,69 @@ export class XRPLStrategyManager {
    * Ciclo principal ejecutado en cada bloque
    */
   private async tick() {
-    // 1. Consultar precio de referencia desde el oráculo (Coinbase)
-    const marketPrice = await this.getFairPrice();
-    if (marketPrice <= 0) {
-      log.warn('No se pudo calcular el precio del oráculo. Saltando ciclo...');
+    // 1. Consultar precio de referencia desde el oráculo multi-fuente
+    const consensus = await this.multiOracle.getConsensusPrice();
+    if (!consensus || consensus.price <= 0) {
+      log.warn('No se pudo obtener precio de consenso (fuentes insuficientes). Saltando ciclo...');
       return;
     }
 
-    log.debug(`Precio Oráculo: ${marketPrice.toFixed(4)} USD`);
+    const marketPrice = consensus.price;
 
-    // 2. Ejecutar tick de la estrategia activa
+    if (consensus.confidence < 0.5) {
+      const health = this.multiOracle.getSourceHealth();
+      const healthyCount = Object.values(health).filter(h => h.healthy).length;
+      log.warn(`Oráculo degradado (${healthyCount}/4 fuentes, confianza: ${(consensus.confidence * 100).toFixed(0)}%). Operando con precio disponible.`);
+    }
+
+    log.debug(`Precio Oráculo: ${marketPrice.toFixed(4)} USD (${consensus.sources.filter(s => s.healthy).length} fuentes, ${(consensus.confidence * 100).toFixed(0)}% conf)`);
+
+    // 2. Actualizar precio en PaperOrderManager (si activo)
+    if (this.paperOrderManager) {
+      this.paperOrderManager.setOraclePrice(marketPrice);
+      // Tomar snapshot periódico (cada 10 ticks)
+      if (this.tickCount % 10 === 0) {
+        this.paperOrderManager.getDB().takeSnapshot(marketPrice);
+      }
+    }
+
+    // 3. Ejecutar tick de la estrategia activa
     await this.strategy.tick(this.currentLedger, marketPrice);
+
+    // 4. Actualizar Health Monitor (si inyectado)
+    if (this.healthMonitor) {
+      this.healthMonitor.updateLedgerState(
+        this.currentLedger,
+        this.tickCount,
+        this.strategy.name
+      );
+    }
+
+    // 5. Actualizar CLI Dashboard (si inyectado)
+    if (this.cliDash && this.healthMonitor) {
+      try {
+        const snapshot = await this.healthMonitor.getSnapshot();
+        this.cliDash.update(snapshot);
+      } catch (err) {
+        log.error('Error actualizando CLI dashboard:', err);
+      }
+    }
   }
 
   /**
-   * Consulta el precio real de mercado (spot) de XRP/USD desde la API pública de Coinbase
-   * para usarlo como precio justo de referencia.
+   * Re-suscribe al stream de ledgers del servidor XRPL.
+   * Llamar después de una reconexión WebSocket para restaurar el feed de eventos.
+   * No agrega listeners duplicados — solo re-envía el comando 'subscribe'.
    */
-  private async getFairPrice(): Promise<number> {
+  async resubscribeLedger() {
     try {
-      const response = await fetch('https://api.coinbase.com/v2/prices/XRP-USD/spot');
-      if (!response.ok) {
-        throw new Error(`Coinbase API returned status ${response.status}`);
-      }
-      const data: any = await response.json();
-      const price = parseFloat(data.data.amount);
-      if (!isNaN(price) && price > 0) {
-        return price;
-      }
-      return 0.50; // Fallback
+      await this.client.request({
+        command: 'subscribe',
+        streams: ['ledger']
+      });
+      log.info('Suscripción a ledger stream restaurada.');
     } catch (error) {
-      log.warn('No se pudo obtener el precio de Coinbase. Usando fallback (0.50 USD).', (error as any).message);
-      return 0.50;
+      log.error('Error al suscribirse al stream de ledgers:', error);
     }
   }
 

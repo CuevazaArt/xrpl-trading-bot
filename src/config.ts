@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import { Logger, LogLevel } from './logger.js';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -8,6 +9,14 @@ export const config = {
   xrplWsUrl: process.env.XRPL_WS_URL || 'wss://s.altnet.rippletest.net:51233',
   walletSeed: process.env.XRPL_WALLET_SEED || null,
   strategy: process.env.STRATEGY || 'market_maker',
+  
+  // Emisor USD (Bitstamp) — centralizado para todo el bot
+  usdIssuer: process.env.USD_ISSUER || 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B',
+  
+  // Binance CEX (para arbitraje de 2 patas)
+  binanceApiKey: process.env.BINANCE_API_KEY || '',
+  binanceApiSecret: process.env.BINANCE_API_SECRET || '',
+  binanceBaseUrl: process.env.BINANCE_BASE_URL || 'https://api.binance.com',
   
   // Parámetros de Dorothy (DCA Long)
   dorothyProfitFactor: parseFloat(process.env.DOROTHY_PROFIT_FACTOR || '0.05'),
@@ -49,7 +58,50 @@ export const config = {
   // Parámetros comunes de DCA
   maxRungs: parseInt(process.env.MAX_RUNGS || '3', 10),
   rungQtyXrp: process.env.RUNG_QTY_XRP || '10',
+
+  // Parámetros de Arbitraje DEX-CEX
+  arbMinSpreadPct: parseFloat(process.env.ARB_MIN_SPREAD_PCT || '0.15'),
+  arbMaxTradeXrp: parseFloat(process.env.ARB_MAX_TRADE_XRP || '50'),
+  arbMinTradeXrp: parseFloat(process.env.ARB_MIN_TRADE_XRP || '10'),
+  arbMaxPositionXrp: parseFloat(process.env.ARB_MAX_POSITION_XRP || '200'),
+  arbCooldownLedgers: parseInt(process.env.ARB_COOLDOWN_LEDGERS || '2', 10),
+  arbMaxSlippagePct: parseFloat(process.env.ARB_MAX_SLIPPAGE_PCT || '0.10'),
+  arbMinOracleConfidence: parseFloat(process.env.ARB_MIN_ORACLE_CONFIDENCE || '0.6'),
+  arbMinOracleSources: parseInt(process.env.ARB_MIN_ORACLE_SOURCES || '2', 10),
+
+  // Market Maker
+  mmBaseSpread: parseFloat(process.env.MM_BASE_SPREAD || '0.01'),
+  mmMinSpread: parseFloat(process.env.MM_MIN_SPREAD || '0.005'),
+  mmMaxSpread: parseFloat(process.env.MM_MAX_SPREAD || '0.02'),
+  mmOrderAmountXrp: parseFloat(process.env.MM_ORDER_AMOUNT_XRP || '10'),
+  mmPriceDeviationThreshold: parseFloat(process.env.MM_PRICE_DEVIATION_THRESHOLD || '0.003'),
+  mmCooldownLedgers: parseInt(process.env.MM_COOLDOWN_LEDGERS || '3', 10),
+  mmMaxPositionXrp: parseFloat(process.env.MM_MAX_POSITION_XRP || '80'),
+  mmTargetPositionXrp: parseFloat(process.env.MM_TARGET_POSITION_XRP || '50'),
+
+  // Telegram Notifier
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
+  telegramChatId: process.env.TELEGRAM_CHAT_ID || '',
+
+  // Health Monitor
+  healthIntervalSeconds: parseInt(process.env.HEALTH_INTERVAL_SECONDS || '300', 10),
+
+  // Dashboard
+  dashboardPort: parseInt(process.env.DASHBOARD_PORT || '3000', 10),
+  dashboardToken: process.env.DASHBOARD_TOKEN || '',
+
+  // Log level (DEBUG, INFO, WARN, ERROR)
+  logLevel: (process.env.LOG_LEVEL || 'DEBUG').toUpperCase(),
 };
+
+// Configurar nivel de log global
+const levelMap: Record<string, LogLevel> = {
+  'DEBUG': LogLevel.DEBUG,
+  'INFO': LogLevel.INFO,
+  'WARN': LogLevel.WARN,
+  'ERROR': LogLevel.ERROR,
+};
+Logger.setLevel(levelMap[config.logLevel] ?? LogLevel.DEBUG);
 
 // Validación básica
 if (!config.xrplWsUrl) {

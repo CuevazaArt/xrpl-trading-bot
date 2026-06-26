@@ -1,8 +1,9 @@
 import http from 'http';
 import { db } from './db.js';
+import { config } from './config.js';
 
 export class XRPLDashboard {
-  private port: number = 3000;
+  private port: number = config.dashboardPort;
   private server: http.Server | null = null;
   
   // Variables compartidas con el bot para reportar el estado en vivo
@@ -27,14 +28,30 @@ export class XRPLDashboard {
 
   start() {
     this.server = http.createServer((req, res) => {
+      // Autenticación Bearer Token (si está configurado)
+      if (config.dashboardToken) {
+        const authHeader = req.headers['authorization'] || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        // También aceptar token como query param para navegadores
+        const urlToken = new URL(req.url || '/', `http://localhost:${this.port}`).searchParams.get('token') || '';
+        
+        if (token !== config.dashboardToken && urlToken !== config.dashboardToken) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Unauthorized. Provide DASHBOARD_TOKEN via Authorization: Bearer <token> header or ?token= query param.' }));
+          return;
+        }
+      }
+
       // 1. Endpoint API para retornar el estado en formato JSON
-      if (req.url === '/api/status' && req.method === 'GET') {
+      if (req.url?.startsWith('/api/status') && req.method === 'GET') {
         res.writeHead(200, {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         });
+        const maskedAddress = this.maskAddress(this.state.walletAddress);
         const statusData = {
           ...this.state,
+          walletAddress: maskedAddress,
           transactions: db.getTransactions().reverse(), // Últimas primero
           balancesHistory: db.getBalancesHistory()
         };
@@ -43,7 +60,7 @@ export class XRPLDashboard {
       }
 
       // 2. Servir la interfaz web principal HTML/CSS/JS
-      if (req.url === '/' && req.method === 'GET') {
+      if ((req.url === '/' || req.url?.startsWith('/?')) && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(this.getHtmlContent());
         return;
@@ -55,6 +72,7 @@ export class XRPLDashboard {
     });
 
     this.server.listen(this.port, () => {
+      // No usamos logger aquí para no crear dependencia circular
       console.log(`[DASHBOARD] Servidor web iniciado en: http://localhost:${this.port}`);
     });
   }
@@ -64,6 +82,14 @@ export class XRPLDashboard {
       this.server.close();
       console.log('[DASHBOARD] Servidor web apagado.');
     }
+  }
+
+  /**
+   * Enmascara la dirección de wallet para mostrar solo primeros y últimos 4 caracteres.
+   */
+  private maskAddress(address: string): string {
+    if (!address || address.length < 10 || address === 'No inicializada') return address;
+    return `${address.slice(0, 4)}...${address.slice(-4)}`;
   }
 
   private getHtmlContent(): string {
@@ -381,7 +407,11 @@ export class XRPLDashboard {
   <script>
     async function updateDashboard() {
       try {
-        const response = await fetch('/api/status');
+        // Pasar el token de autenticación si está presente en la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || '';
+        const apiUrl = token ? '/api/status?token=' + encodeURIComponent(token) : '/api/status';
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         // Actualizar Balances e Información

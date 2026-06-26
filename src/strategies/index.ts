@@ -7,8 +7,13 @@ import { XRPLBaseAntiLouiseStrategy } from './anti_louise.js';
 import { XRPLMashaStrategy } from './masha.js';
 import { XRPLThusneldaStrategy } from './thusnelda.js';
 import { XRPLAgarthaStrategy } from './agartha.js';
+import { XRPLArbitrageStrategy } from './arbitrage.js';
+import { createLogger } from '../logger.js';
+
+const log = createLogger('StrategyFactory');
 
 export * from './IStrategy.js';
+export * from './AbstractStrategy.js';
 export * from './marketMaker.js';
 export * from './dorothy.js';
 export * from './elphaba.js';
@@ -17,6 +22,7 @@ export * from './anti_louise.js';
 export * from './masha.js';
 export * from './thusnelda.js';
 export * from './agartha.js';
+export * from './arbitrage.js';
 
 /**
  * Factory para instanciar la estrategia elegida según la configuración
@@ -40,8 +46,11 @@ export function createStrategy(strategyName: string): IStrategy {
       return new XRPLThusneldaStrategy();
     case 'agartha':
       return new XRPLAgarthaStrategy();
+    case 'arbitrage':
+      return new XRPLArbitrageStrategy();
     default:
-      console.warn(`[Factory] Estrategia no reconocida: '${strategyName}'. Cargando 'market_maker' por defecto.`);
+      log.warn(`Estrategia no reconocida: '${strategyName}'. Cargando 'market_maker' por defecto.`);
       return new XRPLMarketMakerStrategy();
   }
 }
+

@@ -1,4 +1,7 @@
 import { Client, Wallet } from 'xrpl';
+import { createLogger } from './logger.js';
+
+const log = createLogger('WalletManager');
 
 export class XRPLWalletManager {
   private client: Client;
@@ -15,10 +18,10 @@ export class XRPLWalletManager {
    */
   async initializeWallet(seed: string | null) {
     if (seed) {
-      console.log('Cargando billetera existente desde la semilla (seed) provista...');
+      log.info('Cargando billetera existente desde la semilla (seed) provista...');
       try {
         this.wallet = Wallet.fromSeed(seed);
-        console.log(`Billetera cargada exitosamente: ${this.wallet.address}`);
+        log.info(`Billetera cargada exitosamente: ${this.wallet.address}`);
 
         // Verificar si la cuenta está activa en Testnet; de lo contrario, fondearla
         const url = this.client.connection.getUrl();
@@ -28,41 +31,40 @@ export class XRPLWalletManager {
             await this.client.getXrpBalance(this.wallet.address);
           } catch (error: any) {
             if (error.data && error.data.error === 'actNotFound') {
-              console.log('La cuenta cargada no existe en la Testnet. Solicitando activación y fondeo al Faucet...');
+              log.info('La cuenta cargada no existe en la Testnet. Solicitando activación y fondeo al Faucet...');
               const fundResult = await this.client.fundWallet(this.wallet);
               this.wallet = fundResult.wallet;
-              console.log(`¡Fondeo de cuenta exitoso! Saldo acreditado: ${fundResult.balance} XRP.`);
+              log.info(`¡Fondeo de cuenta exitoso! Saldo acreditado: ${fundResult.balance} XRP.`);
             }
           }
         }
       } catch (error) {
-        console.error('Error al cargar la billetera desde la semilla:', error);
+        log.error('Error al cargar la billetera desde la semilla:', error);
         throw error;
       }
     } else {
-      console.log('No se detectó semilla en las variables de entorno. Generando una nueva billetera local...');
+      log.info('No se detectó semilla en las variables de entorno. Generando una nueva billetera local...');
       this.wallet = Wallet.generate();
-      console.log(`Nueva billetera generada localmente:`);
-      console.log(`Dirección pública: ${this.wallet.address}`);
-      console.log(`Clave semilla (SEED): ${this.wallet.seed}`);
-      console.log(`[IMPORTANTE]: Guarda esta semilla en un lugar seguro para producción.`);
+      log.info(`Nueva billetera generada localmente.`);
+      log.info(`Dirección pública: ${this.wallet.address}`);
+      log.warn('[SEGURIDAD] Seed generado. Consulta el archivo .env para configurarlo. NO se imprime en logs por seguridad.');
 
       // Si la red es de pruebas (Testnet/Devnet), solicitamos fondeo automático al Faucet
       const url = this.client.connection.getUrl();
       const isTestnet = url.includes('testnet') || url.includes('devnet') || url.includes('rippletest') || url.includes('altnet');
       if (isTestnet) {
-        console.log('Detectada red de pruebas. Solicitando 10,000 XRP de fondos gratis al Faucet de XRPL...');
+        log.info('Detectada red de pruebas. Solicitando fondos al Faucet de XRPL...');
         try {
           // El método fundWallet conecta con el faucet, crea/activa la cuenta y la fondea con XRP
           const fundResult = await this.client.fundWallet(this.wallet);
           this.wallet = fundResult.wallet;
-          console.log(`¡Fondeo de cuenta exitoso! Saldo acreditado: ${fundResult.balance} XRP.`);
+          log.info(`¡Fondeo de cuenta exitoso! Saldo acreditado: ${fundResult.balance} XRP.`);
         } catch (error) {
-          console.error('Error al intentar fondear la cuenta con el Faucet:', error);
-          console.warn('Es posible que debas fondear esta billetera manualmente.');
+          log.error('Error al intentar fondear la cuenta con el Faucet:', error);
+          log.warn('Es posible que debas fondear esta billetera manualmente.');
         }
       } else {
-        console.log('Red principal detectada o nodo local. Se requiere activar la billetera transfiriendo al menos 10 XRP.');
+        log.info('Red principal detectada o nodo local. Se requiere activar la billetera transfiriendo al menos 10 XRP.');
       }
     }
   }
@@ -81,7 +83,7 @@ export class XRPLWalletManager {
       if (error.data && error.data.error === 'actNotFound') {
         return '0 (Cuenta no activada/no encontrada en la red)';
       }
-      console.error(`Error al obtener balance de XRP para ${this.wallet.address}:`, error);
+      log.error(`Error al obtener balance de XRP para ${this.wallet.address}:`, error);
       throw error;
     }
   }
@@ -110,7 +112,7 @@ export class XRPLWalletManager {
       if (error.data && error.data.error === 'actNotFound') {
         return [];
       }
-      console.error(`Error al consultar líneas de confianza para ${this.wallet.address}:`, error);
+      log.error(`Error al consultar líneas de confianza para ${this.wallet.address}:`, error);
       throw error;
     }
   }
