@@ -109,4 +109,13 @@ describe('JSONDatabase', () => {
     const db = await createFreshDb();
     expect(db.getLastBalance()).toBeNull();
   });
+
+  it('debe poder guardar y recuperar datos personalizados (custom data)', async () => {
+    const db = await createFreshDb();
+    const testData = { rungs: [{ price: 0.55, qty: 10 }] };
+    db.saveCustomData('test_key', testData);
+
+    const retrieved = db.getCustomData('test_key');
+    expect(retrieved).toEqual(testData);
+  });
 });

@@ -24,6 +24,7 @@ export class JSONDatabase {
   private data: {
     transactions: TransactionRecord[];
     balances: BalanceRecord[];
+    custom?: Record<string, any>;
   };
   private writeQueue: Promise<void> = Promise.resolve();
 
@@ -126,6 +127,24 @@ export class JSONDatabase {
   getLastBalance(): BalanceRecord | null {
     if (this.data.balances.length === 0) return null;
     return this.data.balances[this.data.balances.length - 1];
+  }
+
+  /**
+   * Guarda cualquier dato personalizado en la DB local
+   */
+  saveCustomData(key: string, value: any): void {
+    if (!this.data.custom) {
+      this.data.custom = {};
+    }
+    this.data.custom[key] = value;
+    this.enqueueWrite();
+  }
+
+  /**
+   * Recupera cualquier dato personalizado desde la DB local
+   */
+  getCustomData(key: string): any {
+    return this.data.custom ? this.data.custom[key] : undefined;
   }
 }
 

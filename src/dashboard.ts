@@ -14,12 +14,16 @@ export class XRPLDashboard {
     activeSellSeq: 'Ninguna',
     midPrice: '0.0000',
     buyTarget: '0.0000',
-    sellTarget: '0.0000'
+    sellTarget: '0.0000',
+    strategyName: 'Ninguna',
+    activeRungs: 'N/A',
+    botStatus: 'Iniciando...'
   };
 
   updateState(newState: Partial<typeof this.state>) {
     this.state = { ...this.state, ...newState };
   }
+
 
   start() {
     this.server = http.createServer((req, res) => {
@@ -293,7 +297,7 @@ export class XRPLDashboard {
         <h1>XRPL Trading Bot</h1>
         <p style="color: var(--text-muted); margin-top: 5px;">Panel de Control y Monitorización de Estrategia</p>
       </div>
-      <div class="status-tag">ESTRATEGIA ACTIVA</div>
+      <div class="status-tag" id="strategy-tag" style="background: rgba(91, 109, 246, 0.15); border: 1px solid var(--accent-color); color: var(--text-main);">Cargando Estrategia...</div>
     </header>
 
     <div class="dashboard-grid">
@@ -315,6 +319,18 @@ export class XRPLDashboard {
       <div class="card">
         <h2>Estado de Libros y Órdenes</h2>
         <div class="info-list">
+          <div class="info-row">
+            <span>Estrategia Activa:</span>
+            <span id="strategy-name" style="font-weight: bold; color: var(--accent-color);">Cargando...</span>
+          </div>
+          <div class="info-row">
+            <span>Estado del Bot:</span>
+            <span id="bot-status" style="color: var(--text-main);">Cargando...</span>
+          </div>
+          <div class="info-row">
+            <span>Peldaños (DCA Rungs):</span>
+            <span id="active-rungs" style="color: var(--success-color); font-weight: bold;">N/A</span>
+          </div>
           <div class="info-row">
             <span>Precio Referencia (Oráculo):</span>
             <span id="mid-price" style="font-weight: bold; color: var(--text-main);">0.0000 USD</span>
@@ -373,6 +389,12 @@ export class XRPLDashboard {
         document.getElementById('xrp-balance').textContent = parseFloat(data.xrpBalance).toFixed(4);
         document.getElementById('usd-balance').textContent = parseFloat(data.usdBalance).toFixed(4);
         
+        // Estrategia y Estado de Bots
+        document.getElementById('strategy-tag').textContent = data.strategyName.toUpperCase();
+        document.getElementById('strategy-name').textContent = data.strategyName;
+        document.getElementById('bot-status').textContent = data.botStatus;
+        document.getElementById('active-rungs').textContent = data.activeRungs;
+
         // Estado DEX
         document.getElementById('mid-price').textContent = parseFloat(data.midPrice).toFixed(4) + ' USD';
         document.getElementById('buy-target').textContent = parseFloat(data.buyTarget).toFixed(4) + ' USD';
@@ -419,6 +441,7 @@ export class XRPLDashboard {
   </script>
 </body>
 </html>
+
 `;
   }
 }
