@@ -1,4 +1,6 @@
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 import { db } from './db.js';
 import { config } from './config.js';
 
@@ -56,6 +58,29 @@ export class XRPLDashboard {
           balancesHistory: db.getBalancesHistory()
         };
         res.end(JSON.stringify(statusData));
+        return;
+      }
+
+      // 1.1 Endpoint API para retornar las últimas líneas de logs raw
+      if (req.url?.startsWith('/api/logs') && req.method === 'GET') {
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        
+        try {
+          const logPath = path.join(process.cwd(), 'data', 'app_raw.log');
+          if (fs.existsSync(logPath)) {
+            const content = fs.readFileSync(logPath, 'utf8');
+            const lines = content.split('\n').filter(Boolean);
+            const lastLines = lines.slice(-40); // Últimos 40 logs
+            res.end(JSON.stringify({ logs: lastLines }));
+          } else {
+            res.end(JSON.stringify({ logs: ['El bot aún no ha generado registros en app_raw.log.'] }));
+          }
+        } catch (err) {
+          res.end(JSON.stringify({ logs: [`Error leyendo logs: ${(err as any).message}`] }));
+        }
         return;
       }
 
@@ -145,7 +170,16 @@ export class XRPLDashboard {
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
-      padding-bottom: 20px;
+      padding: 15px 25px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(15, 17, 26, 0.85);
+      border-radius: 0 0 20px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
 
     header h1 {
@@ -401,6 +435,20 @@ export class XRPLDashboard {
           </table>
         </div>
       </div>
+
+      <!-- Card Terminal Logs (Siempre visible en rejilla completa) -->
+      <div class="card" style="grid-column: 1 / -1; gap: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+          <h2 style="margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background-color: var(--success-color); display: inline-block;"></span>
+            Registro del Bot (Terminal Logs)
+          </h2>
+          <button id="clearLogsBtn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: background 0.2s;">Limpiar Vista</button>
+        </div>
+        <div id="terminalBody" style="background: #060813; font-family: 'Courier New', Courier, monospace; font-size: 0.85rem; color: #a5b4fc; padding: 15px; border-radius: 12px; height: 260px; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; border: 1px solid rgba(255,255,255,0.03);">
+          Cargando registros...
+        </div>
+      </div>
     </div>
   </div>
 
@@ -465,9 +513,49 @@ export class XRPLDashboard {
       }
     }
 
+    let logsCleared = false;
+    async function updateLogs() {
+      if (logsCleared) return;
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || '';
+        const logsUrl = token ? '/api/logs?token=' + encodeURIComponent(token) : '/api/logs';
+        const response = await fetch(logsUrl);
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        const terminalBody = document.getElementById('terminalBody');
+        if (terminalBody && data.logs) {
+          const shouldScroll = terminalBody.scrollHeight - terminalBody.clientHeight <= terminalBody.scrollTop + 50;
+          
+          terminalBody.innerHTML = data.logs.map(line => {
+            if (line.includes('[ERROR]')) return '<span style="color: var(--error-color); font-weight: bold;">' + line + '</span>';
+            if (line.includes('[WARN ]') || line.includes('[WARN]')) return '<span style="color: #fbbf24; font-weight: bold;">' + line + '</span>';
+            if (line.includes('[DEBUG]')) return '<span style="color: #60a5fa; opacity: 0.85;">' + line + '</span>';
+            return '<span>' + line + '</span>';
+          }).join('\n');
+          
+          if (shouldScroll) {
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+          }
+        }
+      } catch (err) {
+        console.error('Error al obtener logs:', err);
+      }
+    }
+
+    document.getElementById('clearLogsBtn').addEventListener('click', () => {
+      const body = document.getElementById('terminalBody');
+      if (body) body.innerHTML = '<span style="color: var(--text-muted);">Logs limpiados localmente. Volverán a aparecer al recibir nuevos eventos.</span>';
+      logsCleared = true;
+      setTimeout(() => { logsCleared = false; }, 3000);
+    });
+
     // Actualizar cada 2 segundos
     setInterval(updateDashboard, 2000);
+    setInterval(updateLogs, 2000);
     updateDashboard();
+    updateLogs();
   </script>
 </body>
 </html>

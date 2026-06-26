@@ -1,1469 +1,464 @@
 {
-  "transactions": [],
-  "balances": [
+  "transactions": [
     {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "10",
-      "usd": "20"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "11",
-      "usd": "22"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "12",
-      "usd": "24"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "13",
-      "usd": "26"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "14",
-      "usd": "28"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "15",
-      "usd": "30"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "16",
-      "usd": "32"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "17",
-      "usd": "34"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "18",
-      "usd": "36"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "19",
-      "usd": "38"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "20",
-      "usd": "40"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "21",
-      "usd": "42"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "22",
-      "usd": "44"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "23",
-      "usd": "46"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "24",
-      "usd": "48"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "25",
-      "usd": "50"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "26",
-      "usd": "52"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "27",
-      "usd": "54"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "28",
-      "usd": "56"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "29",
-      "usd": "58"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "30",
-      "usd": "60"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "31",
-      "usd": "62"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "32",
-      "usd": "64"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "33",
-      "usd": "66"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "34",
-      "usd": "68"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "35",
-      "usd": "70"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "36",
-      "usd": "72"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "37",
-      "usd": "74"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "38",
-      "usd": "76"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "39",
-      "usd": "78"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "40",
-      "usd": "80"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "41",
-      "usd": "82"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "42",
-      "usd": "84"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.706Z",
-      "xrp": "43",
-      "usd": "86"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "44",
-      "usd": "88"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "45",
-      "usd": "90"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "46",
-      "usd": "92"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "47",
-      "usd": "94"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "48",
-      "usd": "96"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "49",
-      "usd": "98"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "50",
-      "usd": "100"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "51",
-      "usd": "102"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "52",
-      "usd": "104"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "53",
-      "usd": "106"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "54",
-      "usd": "108"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "55",
-      "usd": "110"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "56",
-      "usd": "112"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "57",
-      "usd": "114"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "58",
-      "usd": "116"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "59",
-      "usd": "118"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "60",
-      "usd": "120"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "61",
-      "usd": "122"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "62",
-      "usd": "124"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "63",
-      "usd": "126"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "64",
-      "usd": "128"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "65",
-      "usd": "130"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "66",
-      "usd": "132"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "67",
-      "usd": "134"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "68",
-      "usd": "136"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "69",
-      "usd": "138"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "70",
-      "usd": "140"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "71",
-      "usd": "142"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "72",
-      "usd": "144"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "73",
-      "usd": "146"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "74",
-      "usd": "148"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "75",
-      "usd": "150"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "76",
-      "usd": "152"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "77",
-      "usd": "154"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "78",
-      "usd": "156"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "79",
-      "usd": "158"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "80",
-      "usd": "160"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "81",
-      "usd": "162"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "82",
-      "usd": "164"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "83",
-      "usd": "166"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "84",
-      "usd": "168"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "85",
-      "usd": "170"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "86",
-      "usd": "172"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "87",
-      "usd": "174"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "88",
-      "usd": "176"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "89",
-      "usd": "178"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "90",
-      "usd": "180"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "91",
-      "usd": "182"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "92",
-      "usd": "184"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "93",
-      "usd": "186"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "94",
-      "usd": "188"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "95",
-      "usd": "190"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "96",
-      "usd": "192"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "97",
-      "usd": "194"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "98",
-      "usd": "196"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "99",
-      "usd": "198"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "100",
-      "usd": "200"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "101",
-      "usd": "202"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "102",
-      "usd": "204"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "103",
-      "usd": "206"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "104",
-      "usd": "208"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "105",
-      "usd": "210"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "106",
-      "usd": "212"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "107",
-      "usd": "214"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "108",
-      "usd": "216"
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.707Z",
-      "xrp": "109",
-      "usd": "218"
-    }
-  ]
-}SUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_73",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_74",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_75",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_76",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_77",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_78",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_79",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_80",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_81",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_82",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_83",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_84",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_85",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_86",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_87",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_88",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_89",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_90",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_91",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_92",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_93",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_94",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_95",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_96",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_97",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_98",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_99",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_100",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_101",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_102",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_103",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_104",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_105",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_106",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_107",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_108",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_109",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_110",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_111",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_112",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_113",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_114",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_115",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_116",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_117",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_118",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_119",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_120",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_121",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_122",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_123",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_124",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_125",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_126",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_127",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_128",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_129",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_130",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_131",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_132",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_133",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_134",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_135",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_136",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_137",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_138",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_139",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_140",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_141",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_142",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_143",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_144",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_145",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_146",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_147",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_148",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_149",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_150",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_151",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_152",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_153",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_154",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_155",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_156",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_157",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_158",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_159",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_160",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_161",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_162",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_163",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_164",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_165",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_166",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_167",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_168",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_169",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_170",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_171",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_172",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_173",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_174",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_175",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_176",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_177",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_178",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_179",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_180",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_181",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_182",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_183",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_184",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_185",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_186",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_187",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_188",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_189",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_190",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_191",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_192",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_193",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_194",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_195",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_196",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_197",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_198",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_199",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_200",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_201",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_202",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_203",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_204",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_205",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_206",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_207",
-      "status": "tesSUCCESS",
-      "detail": {}
-    },
-    {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_208",
+      "timestamp": "2026-06-26T20:50:57.663Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
       "status": "tesSUCCESS",
-      "detail": {}
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
     },
     {
-      "timestamp": "2026-06-26T20:49:35.694Z",
-      "type": "TEST",
-      "hash": "hash_209",
+      "timestamp": "2026-06-26T20:55:27.562Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
       "status": "tesSUCCESS",
-      "detail": {}
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
     }
   ],
-  "balances": []
+  "balances": [
+    {
+      "timestamp": "2026-06-26T20:50:52.420Z",
+      "xrp": "100",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:50:57.664Z",
+      "xrp": "100",
+      "usd": "1000"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:00.633Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:03.623Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:06.622Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:10.402Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:13.394Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:17.017Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:19.989Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:23.014Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:26.751Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:29.695Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:33.024Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:35.718Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:39.428Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:42.762Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:45.649Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:48.634Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:51.677Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:55.205Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:51:58.691Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:01.705Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:05.437Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:08.682Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:12.409Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:15.449Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:18.667Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:21.702Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:25.437Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:28.735Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:32.453Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:35.538Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:38.674Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:42.823Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:45.458Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:48.695Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:51.742Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:55.412Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:52:58.426Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:01.459Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:04.402Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:07.597Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:10.421Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:13.452Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:16.306Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:19.217Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:22.288Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:25.184Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:28.450Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:31.235Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:34.476Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:37.453Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:40.496Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:43.334Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:46.474Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:49.311Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:52.476Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:56.070Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:53:59.058Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:02.054Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:05.046Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:08.093Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:11.098Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:15.034Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:18.771Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:21.783Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:27.313Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:39.445Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:43.433Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:52.157Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:55.597Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:54:57.156Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:00.141Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:03.129Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:07.211Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:10.095Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:13.819Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:17.507Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:20.527Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:23.517Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:27.478Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:27.563Z",
+      "xrp": "99.999988",
+      "usd": "1000"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:30.473Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:35.019Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:36.077Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:39.143Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:42.104Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T20:55:45.120Z",
+      "xrp": "99.999988",
+      "usd": "0"
+    }
+  ]
 }
