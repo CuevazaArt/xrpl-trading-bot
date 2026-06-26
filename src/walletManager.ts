@@ -19,6 +19,22 @@ export class XRPLWalletManager {
       try {
         this.wallet = Wallet.fromSeed(seed);
         console.log(`Billetera cargada exitosamente: ${this.wallet.address}`);
+
+        // Verificar si la cuenta está activa en Testnet; de lo contrario, fondearla
+        const url = this.client.connection.getUrl();
+        const isTestnet = url.includes('testnet') || url.includes('devnet') || url.includes('rippletest') || url.includes('altnet');
+        if (isTestnet) {
+          try {
+            await this.client.getXrpBalance(this.wallet.address);
+          } catch (error: any) {
+            if (error.data && error.data.error === 'actNotFound') {
+              console.log('La cuenta cargada no existe en la Testnet. Solicitando activación y fondeo al Faucet...');
+              const fundResult = await this.client.fundWallet(this.wallet);
+              this.wallet = fundResult.wallet;
+              console.log(`¡Fondeo de cuenta exitoso! Saldo acreditado: ${fundResult.balance} XRP.`);
+            }
+          }
+        }
       } catch (error) {
         console.error('Error al cargar la billetera desde la semilla:', error);
         throw error;
