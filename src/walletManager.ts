@@ -76,7 +76,7 @@ export class XRPLWalletManager {
     }
     try {
       const balance = await this.client.getXrpBalance(this.wallet.address);
-      return balance;
+      return String(balance);
     } catch (error: any) {
       if (error.data && error.data.error === 'actNotFound') {
         return '0 (Cuenta no activada/no encontrada en la red)';

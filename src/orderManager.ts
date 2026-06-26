@@ -1,4 +1,4 @@
-import { Client, Wallet, OfferCreate, OfferCancel, SubmittableTransaction } from 'xrpl';
+import { Client, Wallet, OfferCreate, OfferCancel, SubmittableTransaction, Amount } from 'xrpl';
 
 export class XRPLOrderManager {
   private client: Client;
@@ -49,7 +49,7 @@ export class XRPLOrderManager {
    * @param takerPays Lo que el trader quiere RECIBIR (Comprar)
    * @param takerGets Lo que el trader ofrece PAGAR (Vender)
    */
-  async createLimitOrder(wallet: Wallet, takerPays: string | object, takerGets: string | object) {
+  async createLimitOrder(wallet: Wallet, takerPays: Amount, takerGets: Amount) {
     const txJSON: OfferCreate = {
       TransactionType: 'OfferCreate',
       Account: wallet.address,
@@ -67,7 +67,7 @@ export class XRPLOrderManager {
    * @param takerPays Lo que quiere recibir
    * @param takerGets Lo que ofrece a cambio
    */
-  async createMarketOrder(wallet: Wallet, takerPays: string | object, takerGets: string | object) {
+  async createMarketOrder(wallet: Wallet, takerPays: Amount, takerGets: Amount) {
     const txJSON: OfferCreate = {
       TransactionType: 'OfferCreate',
       Account: wallet.address,

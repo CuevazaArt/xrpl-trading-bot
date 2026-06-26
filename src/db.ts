@@ -1,5 +1,9 @@
 import fs from 'fs';
+import fsp from 'fs/promises';
 import path from 'path';
+import { createLogger } from './logger.js';
+
+const log = createLogger('Database');
 
 interface TransactionRecord {
   timestamp: string;
@@ -21,6 +25,7 @@ export class JSONDatabase {
     transactions: TransactionRecord[];
     balances: BalanceRecord[];
   };
+  private writeQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     // Definir la ruta en el directorio del proyecto
@@ -30,27 +35,37 @@ export class JSONDatabase {
     }
     this.dbPath = path.join(dir, 'db.json');
 
-    // Inicializar los datos
+    // Inicializar los datos (lectura síncrona solo en el arranque)
     if (fs.existsSync(this.dbPath)) {
       try {
         const fileContent = fs.readFileSync(this.dbPath, 'utf8');
         this.data = JSON.parse(fileContent);
       } catch (error) {
-        console.error('Error al cargar la base de datos JSON. Reinicializando...');
+        log.error('Error al cargar la base de datos JSON. Reinicializando...');
         this.data = { transactions: [], balances: [] };
       }
     } else {
       this.data = { transactions: [], balances: [] };
-      this.saveToFile();
+      this.enqueueWrite();
     }
   }
 
-  private saveToFile() {
-    try {
-      fs.writeFileSync(this.dbPath, JSON.stringify(this.data, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Error al escribir en la base de datos JSON:', error);
-    }
+  /**
+   * Escritura atómica: escribe a un archivo temporal y luego renombra.
+   * Las escrituras se encolan para evitar condiciones de carrera.
+   */
+  private enqueueWrite() {
+    this.writeQueue = this.writeQueue.then(async () => {
+      const tmpPath = this.dbPath + '.tmp';
+      try {
+        await fsp.writeFile(tmpPath, JSON.stringify(this.data, null, 2), 'utf8');
+        await fsp.rename(tmpPath, this.dbPath);
+      } catch (error) {
+        log.error('Error al escribir en la base de datos JSON:', error);
+        // Intentar limpieza del temporal
+        try { await fsp.unlink(tmpPath); } catch { /* ignore */ }
+      }
+    });
   }
 
   /**
@@ -70,7 +85,7 @@ export class JSONDatabase {
     if (this.data.transactions.length > 200) {
       this.data.transactions.shift();
     }
-    this.saveToFile();
+    this.enqueueWrite();
   }
 
   /**
@@ -88,7 +103,7 @@ export class JSONDatabase {
     if (this.data.balances.length > 100) {
       this.data.balances.shift();
     }
-    this.saveToFile();
+    this.enqueueWrite();
   }
 
   /**

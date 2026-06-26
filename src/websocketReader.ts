@@ -1,107 +1,141 @@
-import { Client, LedgerCloseStream } from 'xrpl';
+import { Client } from 'xrpl';
+import { EventEmitter } from 'events';
+import { createLogger } from './logger.js';
 
-export class XRPLWebsocketReader {
+const log = createLogger('WebSocketReader');
+
+/**
+ * Eventos tipados que emite el reader:
+ * - 'ledgerClosed': { ledger_index, ledger_hash, txn_count }
+ * - 'orderBookUpdate': { account, takerPays, takerGets }
+ * - 'ownTransaction': { hash, type, meta } — transacciones de nuestra cuenta
+ */
+export interface LedgerEvent {
+  ledger_index: number;
+  ledger_hash: string;
+  txn_count: number;
+}
+
+export interface OrderBookEvent {
+  account: string;
+  takerPays: any;
+  takerGets: any;
+}
+
+export class XRPLWebsocketReader extends EventEmitter {
   private client: Client;
+  private walletAddress: string | null = null;
 
-  constructor(wsUrl: string) {
-    this.client = new Client(wsUrl);
+  /**
+   * Recibe el Client compartido (no crea conexión propia).
+   */
+  constructor(client: Client) {
+    super();
+    this.client = client;
   }
 
   /**
-   * Conecta al cliente WebSocket de XRPL y activa las suscripciones.
+   * Establece la dirección de la wallet para detectar transacciones propias.
+   */
+  setWalletAddress(address: string) {
+    this.walletAddress = address;
+  }
+
+  /**
+   * Activa las suscripciones sobre el Client compartido ya conectado.
    */
   async start() {
-    console.log(`Conectando al nodo XRPL WebSocket en: ${this.client.connection.getUrl()}...`);
-    await this.client.connect();
-    console.log('Conexión WebSocket establecida exitosamente.');
+    log.info('Activando suscripciones WebSocket...');
 
     // 1. Suscribirse a los eventos del Ledger (cierres de bloques)
     await this.subscribeToLedgers();
 
-    // 2. Suscribirse a un libro de órdenes de ejemplo (XRP/USD en Testnet)
-    // Usaremos un emisor de USD de prueba muy común en Testnet o un par de prueba.
+    // 2. Suscribirse a un libro de órdenes (XRP/USD)
     await this.subscribeToOrderBook();
+
+    // 3. Suscribirse a transacciones de nuestra cuenta
+    if (this.walletAddress) {
+      await this.subscribeToOwnAccount();
+    }
   }
 
   /**
    * Se suscribe al stream de cierre de ledgers
    */
   private async subscribeToLedgers() {
-    this.client.connection.on('ledgerClosed', (ledger: LedgerCloseStream) => {
-      console.log(`\n==================================================`);
-      console.log(`[Ledger #${ledger.ledger_index}] CERRADO`);
-      console.log(`Hash: ${ledger.ledger_hash}`);
-      console.log(`Transacciones validadas en este bloque: ${ledger.txn_count}`);
-      console.log(`==================================================`);
+    this.client.connection.on('ledgerClosed', (ledger: any) => {
+      const event: LedgerEvent = {
+        ledger_index: ledger.ledger_index,
+        ledger_hash: ledger.ledger_hash,
+        txn_count: ledger.txn_count,
+      };
+      log.debug(`Ledger #${event.ledger_index} cerrado (${event.txn_count} txs)`);
+      this.emit('ledgerClosed', event);
     });
 
     try {
-      const response = await this.client.request({
+      await this.client.request({
         command: 'subscribe',
         streams: ['ledger'],
       });
-      console.log('Suscripción a eventos de Ledger: OK', response.result ? 'Completado' : '');
+      log.info('Suscripción a eventos de Ledger: OK');
     } catch (error) {
-      console.error('Error al suscribirse al stream de ledgers:', error);
+      log.error('Error al suscribirse al stream de ledgers:', error);
     }
   }
 
   /**
-   * Se suscribe a un libro de órdenes (DEX) específico.
-   * Monitorearemos ofertas entre XRP y un USD sintético de pruebas.
+   * Se suscribe al libro de órdenes XRP/USD (Bitstamp).
    */
   private async subscribeToOrderBook() {
-    // Parámetros del libro de órdenes:
-    // TakerPays: Lo que el comprador quiere adquirir.
-    // TakerGets: Lo que el comprador ofrece.
-    const takerPays = { currency: 'XRP' };
-    const takerGets = {
-      currency: 'USD',
-      issuer: 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B' // Bitstamp USD issuer (dirección clásica válida)
-    };
+    const usdIssuer = 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B';
 
     try {
-      // Registrar eventos para el libro de órdenes
-      // El evento 'transaction' se dispara cuando hay transacciones asociadas a nuestras suscripciones
       this.client.connection.on('transaction', (tx) => {
         if (tx.transaction.TransactionType === 'OfferCreate') {
-          console.log(`\n[NUEVA OFERTA DEX]`);
-          console.log(`Cuenta: ${tx.transaction.Account}`);
-          console.log(`Paga (TakerPays): ${JSON.stringify(tx.transaction.TakerPays)}`);
-          console.log(`Recibe (TakerGets): ${JSON.stringify(tx.transaction.TakerGets)}`);
+          const event: OrderBookEvent = {
+            account: tx.transaction.Account,
+            takerPays: tx.transaction.TakerPays,
+            takerGets: tx.transaction.TakerGets,
+          };
+          this.emit('orderBookUpdate', event);
         }
       });
 
-      // Solicitar la suscripción al libro de órdenes
       const response = await this.client.request({
         command: 'subscribe',
         books: [
           {
-            taker_pays: takerPays,
-            taker_gets: takerGets,
-            snapshot: true, // Recibir estado actual del libro
-            both: true,     // Suscribirse a ambas direcciones (compra y venta)
+            taker_pays: { currency: 'XRP' } as any,
+            taker_gets: { currency: 'USD', issuer: usdIssuer } as any,
+            taker: 'rrrrrrrrrrrrrrrrrrrrrhoLvTp',
+            snapshot: true,
+            both: true,
           },
         ],
-      });
+      } as any);
 
-      console.log('Suscripción al libro de órdenes XRP/USD: OK');
-      
-      // Mostrar breve snapshot inicial del libro si está disponible
       const bids = (response.result as any).bids || [];
       const asks = (response.result as any).asks || [];
-      console.log(`[Snapshot Inicial del Libro] Ofertas de Compra (Bids): ${bids.length}, Ofertas de Venta (Asks): ${asks.length}`);
+      log.info(`Suscripción al libro XRP/USD: OK (Bids: ${bids.length}, Asks: ${asks.length})`);
     } catch (error) {
-      console.error('Error al suscribirse al libro de órdenes:', error);
+      log.error('Error al suscribirse al libro de órdenes:', error);
     }
   }
 
   /**
-   * Cierra la conexión de forma limpia.
+   * Se suscribe a las transacciones de nuestra propia cuenta
+   * para detectar fills de órdenes.
    */
-  async stop() {
-    console.log('Desconectando de XRPL...');
-    await this.client.disconnect();
-    console.log('Desconectado.');
+  private async subscribeToOwnAccount() {
+    try {
+      await this.client.request({
+        command: 'subscribe',
+        accounts: [this.walletAddress!],
+      });
+      log.info(`Suscripción a transacciones de cuenta ${this.walletAddress}: OK`);
+    } catch (error) {
+      log.error('Error al suscribirse a transacciones de cuenta:', error);
+    }
   }
 }
