@@ -171,8 +171,8 @@ export class XRPLArbitrageStrategy extends AbstractStrategy {
   // =====================================================================
 
   async tick(currentLedger: number, _marketPrice: number): Promise<void> {
-    // 0. Verificar que el CEX está configurado
-    if (!this.cex.isConfigured()) {
+    // 0. Verificar que el CEX está configurado (solo obligatorio en real trading)
+    if (!this.cex.isConfigured() && this.orderManager.constructor.name !== 'PaperOrderManager') {
       if (this.state.metrics.consecutiveSkips % 30 === 0) {
         this.log.warn('CEX no configurado. Configura BINANCE_API_KEY y BINANCE_API_SECRET para habilitar arbitraje de 2 patas.');
       }
@@ -468,6 +468,17 @@ export class XRPLArbitrageStrategy extends AbstractStrategy {
    */
   private async executeCexLeg(side: 'BUY' | 'SELL', qtyXrp: number, refPrice: number): Promise<LegResult> {
     try {
+      // Si estamos en Paper Trading, simulamos la ejecución en el CEX inmediatamente
+      if (this.orderManager.constructor.name === 'PaperOrderManager') {
+        return {
+          venue: 'CEX', side,
+          success: true,
+          filledQty: qtyXrp,
+          filledPrice: refPrice,
+          orderId: `PAPER_CEX_${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+        };
+      }
+
       let result: CEXOrderResult;
 
       if (side === 'BUY') {
