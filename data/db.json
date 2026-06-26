@@ -1,0 +1,45 @@
+{
+  "transactions": [
+    {
+      "timestamp": "2026-06-26T01:04:51.357Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-26T01:05:04.120Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "",
+      "status": "tecUNFUNDED_OFFER",
+      "detail": {
+        "price": 1.03385475,
+        "amount": 10
+      }
+    },
+    {
+      "timestamp": "2026-06-26T01:05:07.093Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "",
+      "status": "tecUNFUNDED_OFFER",
+      "detail": {
+        "price": 1.03345675,
+        "amount": 10
+      }
+    }
+  ],
+  "balances": [
+    {
+      "timestamp": "2026-06-26T01:04:47.738Z",
+      "xrp": 99.999808,
+      "usd": "0"
+    },
+    {
+      "timestamp": "2026-06-26T01:04:58.412Z",
+      "xrp": 99.999784,
+      "usd": "0"
+    }
+  ]
+}
