@@ -2,7 +2,7 @@ import { Client } from 'xrpl';
 import { config } from './config.js';
 import { XRPLWebsocketReader } from './websocketReader.js';
 import { XRPLWalletManager } from './walletManager.js';
-import { XRPLOrderManager } from './orderManager.js';
+import { XRPLStrategyManager } from './strategyManager.js';
 
 async function main() {
   console.log('Iniciando bot de trading XRPL...');
@@ -31,34 +31,15 @@ async function main() {
     console.log('Sin líneas de confianza / balances de tokens activos.');
   }
 
-  // 4. Instanciar Order Manager y realizar Prueba de Colocación y Cancelación de Orden
+  // 4. Instanciar e Iniciar la Estrategia de Market Making
   const wallet = walletManager.getWallet();
+  let strategyManager: XRPLStrategyManager | null = null;
+  
   if (wallet) {
-    const orderManager = new XRPLOrderManager(client);
-    console.log('\n--- Iniciando prueba de órdenes (DEX) ---');
-
-    // Colocamos una oferta imposible de emparejar (comprar 1,000,000 USD por 1 gota de XRP) para poder cancelarla
-    const dummyUSD = {
-      currency: 'USD',
-      value: '1000000.0',
-      issuer: 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B'
-    };
-    const dummyXRP = '1'; // 1 gota de XRP (0.000001 XRP)
-
-    console.log(`Colocando orden límite de compra (comprar 1,000,000 USD por 1 gota de XRP)...`);
-    const orderResult = await orderManager.createLimitOrder(wallet, dummyUSD, dummyXRP);
-
-    if (orderResult.success && orderResult.sequence !== undefined) {
-      console.log(`Orden límite colocada con secuencia: ${orderResult.sequence}`);
-      console.log('Esperando 5 segundos antes de cancelarla...');
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      console.log(`Cancelando orden con secuencia: ${orderResult.sequence}...`);
-      await orderManager.cancelOrder(wallet, orderResult.sequence);
-    } else {
-      console.error('La prueba de colocación de orden falló.');
-    }
-    console.log('--- Fin de la prueba de órdenes (DEX) ---\n');
+    strategyManager = new XRPLStrategyManager(client, wallet);
+    await strategyManager.start();
+  } else {
+    console.error('No se pudo iniciar la estrategia porque la billetera no está disponible.');
   }
 
   // 5. Iniciar Lector de WebSockets
@@ -74,6 +55,9 @@ async function main() {
   const gracefulShutdown = async () => {
     console.log('\nRecibida señal de apagado. Limpiando recursos...');
     try {
+      if (strategyManager) {
+        await strategyManager.cancelAllOrders();
+      }
       await reader.stop();
       await client.disconnect();
       console.log('Apagado completado con éxito.');
