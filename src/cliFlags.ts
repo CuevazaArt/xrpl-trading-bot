@@ -31,6 +31,10 @@ export interface CLIFlags {
   verbose: boolean;
   /** Conecta, muestra config y sale sin ejecutar */
   dryRun: boolean;
+  /** Omite el swap automático inicial de XRP a USD */
+  skipSwap: boolean;
+  /** Define un balance USD manual inicial (ej. para simulación/pruebas) */
+  manualUsd: number | null;
 }
 
 /**
@@ -50,6 +54,8 @@ export function parseFlags(argv: string[] = process.argv.slice(2)): CLIFlags {
     cliUi: false,
     verbose: false,
     dryRun: false,
+    skipSwap: false,
+    manualUsd: null,
   };
 
   for (const arg of argv) {
@@ -91,6 +97,14 @@ export function parseFlags(argv: string[] = process.argv.slice(2)): CLIFlags {
         flags.dryRun = true;
         break;
 
+      case '--skip-swap':
+        flags.skipSwap = true;
+        break;
+
+      case '--manual-usd':
+        flags.manualUsd = parseFloat(value) || 0;
+        break;
+
       case '--help':
       case '-h':
         printHelp();
@@ -124,6 +138,8 @@ export function printFlagsSummary(flags: CLIFlags): void {
   if (flags.cliUi) active.push('🖥️  CLI Dashboard ON');
   if (flags.verbose) active.push('🔍 Verbose (DEBUG)');
   if (flags.dryRun) active.push('🧪 Dry Run');
+  if (flags.skipSwap) active.push('⏭️  Saltar Swap Inicial');
+  if (flags.manualUsd !== null) active.push(`💵 Saldo USD manual: $${flags.manualUsd}`);
 
   if (active.length === 0) {
     log.info('CLI Flags: ninguna flag activa (modo por defecto)');
@@ -153,6 +169,8 @@ Flags disponibles:
   --cli-ui              Activa la interface CLI en terminal
   --verbose, -v         Fuerza log level a DEBUG
   --dry-run             Muestra config y sale sin ejecutar
+  --skip-swap           Omite el swap automático inicial de XRP a USD
+  --manual-usd=N        Define un balance USD manual inicial
   --help, -h            Muestra esta ayuda
 
 Ejemplos:

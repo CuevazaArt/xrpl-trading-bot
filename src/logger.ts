@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 /**
  * Logger estructurado ligero para el bot XRPL.
  * Niveles: DEBUG, INFO, WARN, ERROR
@@ -28,9 +31,15 @@ const LEVEL_COLORS: Record<LogLevel, string> = {
 const RESET = '\x1b[0m';
 const DIM = '\x1b[2m';
 
+const logDir = path.join(process.cwd(), 'data');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+const logFilePath = path.join(logDir, 'app_raw.log');
+
 class Logger {
   private module: string;
-  private static globalLevel: LogLevel = LogLevel.DEBUG;
+  private static globalLevel: LogLevel = LogLevel.INFO; // INFO por defecto para evitar ruido
 
   constructor(module: string) {
     this.module = module;
@@ -41,12 +50,21 @@ class Logger {
   }
 
   private log(level: LogLevel, message: string, data?: any) {
-    if (level < Logger.globalLevel) return;
-
     const timestamp = new Date().toISOString();
-    const color = LEVEL_COLORS[level];
     const label = LEVEL_LABELS[level];
 
+    // Escribir siempre la copia raw al archivo
+    const rawLine = `[${timestamp}] [${label}] [${this.module}] ${message}${data !== undefined ? ' ' + (typeof data === 'object' ? JSON.stringify(data) : data) : ''}\n`;
+    try {
+      fs.appendFileSync(logFilePath, rawLine);
+    } catch {
+      // Ignorar fallos de log en archivo
+    }
+
+    // Filtrar para salida en terminal
+    if (level < Logger.globalLevel) return;
+
+    const color = LEVEL_COLORS[level];
     const prefix = `${DIM}${timestamp}${RESET} ${color}[${label}]${RESET} ${DIM}[${this.module}]${RESET}`;
 
     if (data !== undefined) {

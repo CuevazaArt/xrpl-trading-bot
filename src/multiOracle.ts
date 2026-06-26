@@ -1,4 +1,5 @@
 import { createLogger } from './logger.js';
+import { config } from './config.js';
 
 const log = createLogger('MultiOracle');
 
@@ -233,6 +234,24 @@ export class MultiOracle {
   }
 
   private async fetchSingleSource(source: OracleSourceConfig): Promise<OracleQuote> {
+    // Verificar si la fuente está desactivada en la configuración
+    if (
+      process.env.NODE_ENV !== 'test' && (
+        (source.name === 'CryptoCompare' && config.disableCryptoCompare) ||
+        (source.name === 'Binance' && config.disableBinanceOracle) ||
+        (source.name === 'Kraken' && config.disableKrakenOracle) ||
+        (source.name === 'Coinbase' && config.disableCoinbaseOracle)
+      )
+    ) {
+      return {
+        source: source.name,
+        price: 0,
+        timestamp: 0,
+        healthy: false,
+        latencyMs: 0,
+      };
+    }
+
     const state = this.sourceStates.get(source.name)!;
     const startTime = Date.now();
 

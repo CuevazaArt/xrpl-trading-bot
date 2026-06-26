@@ -1,4 +1,5 @@
 import { Client } from 'xrpl';
+import readline from 'readline';
 import { config } from './config.js';
 import { XRPLWebsocketReader } from './websocketReader.js';
 import { XRPLWalletManager } from './walletManager.js';
@@ -134,12 +135,71 @@ async function main() {
   if (trustlineOk) {
     db.logTransaction('TRUSTLINE_USD', '', 'tesSUCCESS', { detail: 'Línea de confianza USD Bitstamp configurada' });
     if (parseFloat(usdBalance) === 0) {
-      log.info('Saldo de USD en cero. Ejecutando swap inicial para obtener dólares de prueba...');
-      await trustlineManager.performInitialSwap(wallet, 20, 1.04);
-      const updatedXrp = await walletManager.getXrpBalance();
-      const updatedTokens = await walletManager.getTokensBalances();
-      const updatedUsd = updatedTokens.find(t => t.currency === 'USD')?.balance || '0';
-      db.logBalance(updatedXrp, updatedUsd);
+      let choice = '';
+      
+      // Determinar la acción a tomar según las flags CLI o la interactividad
+      if (!flags.skipSwap && flags.manualUsd === null) {
+        if (process.stdin.isTTY) {
+          log.info('=====================================================================');
+          log.info('⚠️  El saldo de USD en tu billetera XRPL es $0.');
+          log.info('Selecciona una opción para fondear tu balance de USD:');
+          log.info('  [1] Realizar swap automático (Vender 20 XRP por USD en el DEX)');
+          log.info('  [2] Ingresar saldo USD de forma manual (virtual/simulado para Paper Trading)');
+          log.info('  [3] Omitir swap y continuar con saldo cero');
+          log.info('=====================================================================');
+          
+          const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+          });
+          const ans = await new Promise<string>(resolve => {
+            rl.question('Elige una opción [1-3] (default: 3): ', answer => {
+              rl.close();
+              resolve(answer.trim());
+            });
+          });
+
+          if (ans === '1') choice = 'swap';
+          else if (ans === '2') choice = 'manual';
+          else choice = 'skip';
+        } else {
+          // Si no es terminal interactiva, por seguridad se omite el swap automático
+          choice = 'skip';
+        }
+      } else if (flags.skipSwap) {
+        choice = 'skip';
+      } else if (flags.manualUsd !== null) {
+        choice = 'manual';
+      }
+
+      if (choice === 'swap') {
+        log.info('Saldo de USD en cero. Ejecutando swap inicial para obtener dólares de prueba...');
+        await trustlineManager.performInitialSwap(wallet, 20, 1.04);
+        const updatedXrp = await walletManager.getXrpBalance();
+        const updatedTokens = await walletManager.getTokensBalances();
+        const updatedUsd = updatedTokens.find(t => t.currency === 'USD')?.balance || '0';
+        db.logBalance(updatedXrp, updatedUsd);
+      } else if (choice === 'manual') {
+        let manualBalance = flags.manualUsd;
+        if (manualBalance === null) {
+          const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+          });
+          const ans = await new Promise<string>(resolve => {
+            rl.question('Ingresa la cantidad de USD a simular (ej. 100): ', answer => {
+              rl.close();
+              resolve(answer.trim());
+            });
+          });
+          manualBalance = parseFloat(ans) || 100;
+        }
+        log.info(`Estableciendo balance USD simulado a: $${manualBalance} USD`);
+        usdBalance = manualBalance.toString();
+        db.logBalance(xrpBalance, usdBalance);
+      } else {
+        log.info('Continuando con balance USD en cero (sin swap).');
+      }
     }
   } else {
     log.warn('Advertencia: No se pudo verificar/crear la línea de confianza USD. Las órdenes de compra fallarán.');

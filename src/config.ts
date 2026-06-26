@@ -90,8 +90,14 @@ export const config = {
   dashboardPort: parseInt(process.env.DASHBOARD_PORT || '3000', 10),
   dashboardToken: process.env.DASHBOARD_TOKEN || '',
 
+  // Desactivación de oráculos individuales
+  disableCryptoCompare: process.env.DISABLE_CRYPTOCOMPARE === 'true' || !process.env.CRYPTOCOMPARE_API_KEY,
+  disableBinanceOracle: process.env.DISABLE_BINANCE === 'true',
+  disableKrakenOracle: process.env.DISABLE_KRAKEN === 'true',
+  disableCoinbaseOracle: process.env.DISABLE_COINBASE === 'true',
+
   // Log level (DEBUG, INFO, WARN, ERROR)
-  logLevel: (process.env.LOG_LEVEL || 'DEBUG').toUpperCase(),
+  logLevel: (process.env.LOG_LEVEL || 'INFO').toUpperCase(),
 };
 
 // Configurar nivel de log global
