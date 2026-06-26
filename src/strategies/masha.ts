@@ -107,13 +107,13 @@ export class XRPLMashaStrategy extends AbstractStrategy {
     try {
       const wRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1w&limit=${config.mashaMaPeriods1w}`);
       if (!wRes.ok) throw new Error(`Weekly API failed: ${wRes.status}`);
-      const wKlines: any[] = await wRes.json();
+      const wKlines = (await wRes.json()) as any[];
       const ma1w = this.calculateSMA(wKlines, config.mashaMaPeriods1w);
       const weakness1w = currentPrice < ma1w * (1 - config.mashaMarginLow1w / 100);
 
       const hRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1h&limit=${config.mashaMaPeriods1h}`);
       if (!hRes.ok) throw new Error(`Hourly API failed: ${hRes.status}`);
-      const hKlines: any[] = await hRes.json();
+      const hKlines = (await hRes.json()) as any[];
       const ma1h = this.calculateSMA(hKlines, config.mashaMaPeriods1h);
       const weakness1h = currentPrice < ma1h * (1 - config.mashaMarginLow1h / 100);
 

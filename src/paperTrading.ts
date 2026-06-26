@@ -350,13 +350,20 @@ export class PaperOrderManager extends XRPLOrderManager {
     const trade = this.paperDb.recordTrade(side, 'DEX', qtyXrp, price, 0.01); // XRPL fee ~0.01%
     this.sequenceCounter++;
 
-    return {
-      success: trade !== null,
-      hash: trade ? `PAPER_${trade.id}_${Date.now().toString(36)}` : '',
-      sequence: this.sequenceCounter,
-      result: null as any,
-      error: trade ? undefined : 'Paper: fondos insuficientes',
-    };
+    if (trade) {
+      return {
+        success: true as const,
+        hash: `PAPER_${trade.id}_${Date.now().toString(36)}`,
+        sequence: this.sequenceCounter,
+        result: null as any,
+      };
+    } else {
+      return {
+        success: false as const,
+        error: 'Paper: fondos insuficientes',
+        result: null as any,
+      };
+    }
   }
 
   /**
@@ -368,13 +375,20 @@ export class PaperOrderManager extends XRPLOrderManager {
     const trade = this.paperDb.recordTrade(side, 'DEX', qtyXrp, price, 0.01);
     this.sequenceCounter++;
 
-    return {
-      success: trade !== null,
-      hash: trade ? `PAPER_LIMIT_${trade.id}_${Date.now().toString(36)}` : '',
-      sequence: this.sequenceCounter,
-      result: null as any,
-      error: trade ? undefined : 'Paper: fondos insuficientes',
-    };
+    if (trade) {
+      return {
+        success: true as const,
+        hash: `PAPER_LIMIT_${trade.id}_${Date.now().toString(36)}`,
+        sequence: this.sequenceCounter,
+        result: null as any,
+      };
+    } else {
+      return {
+        success: false as const,
+        error: 'Paper: fondos insuficientes',
+        result: null as any,
+      };
+    }
   }
 
   /**

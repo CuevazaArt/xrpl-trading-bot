@@ -77,7 +77,7 @@ export class XRPLElphabaStrategy extends AbstractStrategy {
     try {
       const res = await fetch('https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1h&limit=10');
       if (!res.ok) throw new Error(`Binance API returned ${res.status}`);
-      const klines: any[] = await res.json();
+      const klines = (await res.json()) as any[];
       if (!klines || klines.length < 2) return { trendOk: true, entryOk: true, candleOpen1h: marketPrice };
 
       let prevHAOpen = parseFloat(klines[0][1]);

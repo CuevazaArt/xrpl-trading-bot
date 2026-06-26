@@ -128,7 +128,7 @@ export class XRPLBaseLouiseStrategy extends AbstractStrategy {
     try {
       const res = await fetch('https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1d&limit=2');
       if (!res.ok) return 0;
-      const klines: any[] = await res.json();
+      const klines = (await res.json()) as any[];
       if (!klines || klines.length < 2) return 0;
       const o = parseFloat(klines[0][1]), h = parseFloat(klines[0][2]), l = parseFloat(klines[0][3]), c = parseFloat(klines[0][4]);
       const haClose = (o + h + l + c) / 4;
