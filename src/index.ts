@@ -152,15 +152,22 @@ async function main() {
             output: process.stdout,
           });
           const ans = await new Promise<string>(resolve => {
-            rl.question('Elige una opción [1-3] (default: 3): ', answer => {
+            const timeout = setTimeout(() => {
+              rl.close();
+              log.info('\n[TIMEOUT] Se seleccionó la Opción [1] (Swap automático) por defecto después de 5 segundos.');
+              resolve('1');
+            }, 5000);
+
+            rl.question('Elige una opción [1-3] (default: 1, auto-ejecuta en 5s): ', answer => {
+              clearTimeout(timeout);
               rl.close();
               resolve(answer.trim());
             });
           });
 
-          if (ans === '1') choice = 'swap';
-          else if (ans === '2') choice = 'manual';
-          else choice = 'skip';
+          if (ans === '2') choice = 'manual';
+          else if (ans === '3' || ans === 'skip') choice = 'skip';
+          else choice = 'swap'; // Opción 1 o Enter vacío es swap por defecto
         } else {
           // Si no es terminal interactiva, por seguridad se omite el swap automático
           choice = 'skip';
