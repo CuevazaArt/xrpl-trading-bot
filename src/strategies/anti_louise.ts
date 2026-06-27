@@ -9,7 +9,34 @@ export class XRPLBaseAntiLouiseStrategy extends AbstractStrategy {
   public readonly name = 'anti_louise';
   private state: AntiLouiseState = { epochId: '', rungs: [], lastShortPrice: 0 };
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  private client!: Client;
+  private wallet!: Wallet;
+  private orderManager!: XRPLOrderManager;
+  private dashboard!: XRPLDashboard;
+
+  private state: AntiLouiseState = {
+    epochId: '',
+    rungs: [],
+    lastShortPrice: 0
+  };
+
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+>>>>>>> Stashed changes
     this.loadState();
     this.dashboard.updateState({ walletAddress: this.wallet.address, strategyName: 'Anti-Louise DCA Short' });
     this.log.info(`Anti-Louise initialized: profit_target=${config.antiLouiseProfitTargetPct}%, dca_step=${config.antiLouiseDcaStepPct}%, max_rungs=${config.maxRungs}`);

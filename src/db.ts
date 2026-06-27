@@ -100,8 +100,8 @@ export class JSONDatabase {
     };
     this.data.balances.push(record);
     
-    // Limitar historial a 100 registros
-    if (this.data.balances.length > 100) {
+    // Limitar historial a 500 registros para evitar crecimiento descontrolado del archivo
+    if (this.data.balances.length > 500) {
       this.data.balances.shift();
     }
     this.enqueueWrite();

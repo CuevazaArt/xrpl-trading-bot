@@ -9,6 +9,7 @@ export const config = {
   xrplWsUrl: process.env.XRPL_WS_URL || 'wss://s.altnet.rippletest.net:51233',
   walletSeed: process.env.XRPL_WALLET_SEED || null,
   strategy: process.env.STRATEGY || 'market_maker',
+  usdIssuer: process.env.USD_ISSUER || 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B',
   
   // Emisor USD (Bitstamp) — centralizado para todo el bot
   usdIssuer: process.env.USD_ISSUER || 'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B',
@@ -59,6 +60,7 @@ export const config = {
   maxRungs: parseInt(process.env.MAX_RUNGS || '3', 10),
   rungQtyXrp: process.env.RUNG_QTY_XRP || '10',
 
+<<<<<<< Updated upstream
   // Parámetros de Arbitraje DEX-CEX
   arbMinSpreadPct: parseFloat(process.env.ARB_MIN_SPREAD_PCT || '0.15'),
   arbMaxTradeXrp: parseFloat(process.env.ARB_MAX_TRADE_XRP || '50'),
@@ -74,11 +76,18 @@ export const config = {
   mmMinSpread: parseFloat(process.env.MM_MIN_SPREAD || '0.005'),
   mmMaxSpread: parseFloat(process.env.MM_MAX_SPREAD || '0.02'),
   mmOrderAmountXrp: parseFloat(process.env.MM_ORDER_AMOUNT_XRP || '10'),
+=======
+  // Parámetros de Market Maker
+  mmBaseSpread: parseFloat(process.env.MM_BASE_SPREAD || '0.01'),
+  mmMinSpread: parseFloat(process.env.MM_MIN_SPREAD || '0.005'),
+  mmMaxSpread: parseFloat(process.env.MM_MAX_SPREAD || '0.02'),
+>>>>>>> Stashed changes
   mmPriceDeviationThreshold: parseFloat(process.env.MM_PRICE_DEVIATION_THRESHOLD || '0.003'),
   mmCooldownLedgers: parseInt(process.env.MM_COOLDOWN_LEDGERS || '3', 10),
   mmMaxPositionXrp: parseFloat(process.env.MM_MAX_POSITION_XRP || '80'),
   mmTargetPositionXrp: parseFloat(process.env.MM_TARGET_POSITION_XRP || '50'),
 
+<<<<<<< Updated upstream
   // Telegram Notifier
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
   telegramChatId: process.env.TELEGRAM_CHAT_ID || '',
@@ -98,6 +107,13 @@ export const config = {
 
   // Log level (DEBUG, INFO, WARN, ERROR)
   logLevel: (process.env.LOG_LEVEL || 'INFO').toUpperCase(),
+=======
+  // Parámetros de Mitigación de Pérdidas y Costos
+  haltOnOracleFailure: process.env.HALT_ON_ORACLE_FAILURE !== 'false',
+  oracleMaxAgeSeconds: parseInt(process.env.ORACLE_MAX_AGE_SECONDS || '60', 10),
+  maxFeeDrops: parseInt(process.env.MAX_FEE_DROPS || '50000', 10),
+  minXrpReserveBuffer: parseFloat(process.env.MIN_XRP_RESERVE_BUFFER || '10.0'),
+>>>>>>> Stashed changes
 };
 
 // Configurar nivel de log global

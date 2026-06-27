@@ -239,6 +239,7 @@ async function main() {
 
   await strategyManager.start();
 
+<<<<<<< Updated upstream
   // 10. Health Monitor (condicional)
   let healthMonitor: HealthMonitor | null = null;
   let telegram: TelegramNotifier | null = null;
@@ -325,6 +326,13 @@ async function main() {
 
   // Graceful shutdown
   const startTime = Date.now();
+=======
+  // 10. Arrancar escáner de arbitraje atómico en el mismo proceso (comparte client y wallet)
+  const { startArbitrageScanner } = await import('./arbitrage.js');
+  startArbitrageScanner(client, wallet);
+
+  // Manejo de apagado controlado (Graceful shutdown)
+>>>>>>> Stashed changes
   const gracefulShutdown = async () => {
     log.info('Recibida señal de apagado. Limpiando recursos...');
     try {
@@ -353,3 +361,18 @@ main().catch((error) => {
   log.error('Error no controlado en la ejecución principal:', error);
   process.exit(1);
 });
+
+// Manejadores globales para evitar caídas del proceso por errores asíncronos imprevistos
+process.on('uncaughtException', (error) => {
+  log.error('EXCEPCIÓN NO CONTROLADA DETECTADA (uncaughtException):', error);
+  // Al ser un bot de trading, dejamos que el proceso siga vivo e intente recuperarse
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('RECHAZO DE PROMESA NO CONTROLADO (unhandledRejection):', {
+    promise,
+    reason: reason instanceof Error ? reason.message : reason,
+    stack: reason instanceof Error ? reason.stack : undefined
+  });
+});
+

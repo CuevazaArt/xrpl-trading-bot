@@ -9,7 +9,33 @@ export class XRPLMashaStrategy extends AbstractStrategy {
   public readonly name = 'masha';
   private state: MashaState = { epochId: '', rungs: [] };
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  private client!: Client;
+  private wallet!: Wallet;
+  private orderManager!: XRPLOrderManager;
+  private dashboard!: XRPLDashboard;
+
+  private state: MashaState = {
+    epochId: '',
+    rungs: []
+  };
+
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+>>>>>>> Stashed changes
     this.loadState();
     this.dashboard.updateState({ walletAddress: this.wallet.address, strategyName: 'Masha Multi-Timeframe DCA' });
     this.log.info(`Masha initialized: profit_factor=${config.mashaProfitFactor}%, periods_1w=${config.mashaMaPeriods1w}, periods_1h=${config.mashaMaPeriods1h}`);
@@ -108,12 +134,20 @@ export class XRPLMashaStrategy extends AbstractStrategy {
       const wRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1w&limit=${config.mashaMaPeriods1w}`);
       if (!wRes.ok) throw new Error(`Weekly API failed: ${wRes.status}`);
       const wKlines = (await wRes.json()) as any[];
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
       const ma1w = this.calculateSMA(wKlines, config.mashaMaPeriods1w);
       const weakness1w = currentPrice < ma1w * (1 - config.mashaMarginLow1w / 100);
 
       const hRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1h&limit=${config.mashaMaPeriods1h}`);
       if (!hRes.ok) throw new Error(`Hourly API failed: ${hRes.status}`);
       const hKlines = (await hRes.json()) as any[];
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
       const ma1h = this.calculateSMA(hKlines, config.mashaMaPeriods1h);
       const weakness1h = currentPrice < ma1h * (1 - config.mashaMarginLow1h / 100);
 

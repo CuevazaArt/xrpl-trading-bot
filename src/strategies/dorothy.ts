@@ -18,7 +18,25 @@ export class XRPLDorothyStrategy extends AbstractStrategy {
   // Estado persistente en memoria para los rungs
   private rungs: DorothyRung[] = [];
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  // Emisor de USD
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+    // Intentar recuperar rungs previos desde la DB local si existen
+>>>>>>> Stashed changes
     this.loadStateFromDB();
     this.dashboard.updateState({
       walletAddress: this.wallet.address,

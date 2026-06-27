@@ -16,7 +16,25 @@ export class XRPLElphabaStrategy extends AbstractStrategy {
   public readonly name = 'elphaba';
   private rungs: ElphabaRung[] = [];
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  // Emisor de USD
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+    // Intentar recuperar rungs previos desde la DB local si existen
+>>>>>>> Stashed changes
     this.loadStateFromDB();
     this.dashboard.updateState({ walletAddress: this.wallet.address, strategyName: 'Elphaba DCA Short' });
     this.log.info(`Elphaba inicializada con profit_factor=${config.elphabaProfitFactor}, margin_rise_factor=${config.elphabaMarginRiseFactor}, max_rungs=${config.maxRungs}`);
@@ -78,7 +96,10 @@ export class XRPLElphabaStrategy extends AbstractStrategy {
       const res = await fetch('https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1h&limit=10');
       if (!res.ok) throw new Error(`Binance API returned ${res.status}`);
       const klines = (await res.json()) as any[];
+<<<<<<< Updated upstream
       if (!klines || klines.length < 2) return { trendOk: true, entryOk: true, candleOpen1h: marketPrice };
+=======
+>>>>>>> Stashed changes
 
       let prevHAOpen = parseFloat(klines[0][1]);
       let prevHAClose = parseFloat(klines[0][4]);

@@ -10,7 +10,10 @@
     "dev": "tsx watch src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fund:usd": "tsx src/fundUsd.ts",
+    "arbitrage": "tsx src/arbitrage.ts",
+    "cleanup": "tsx src/cleanup.ts"
   },
   "keywords": [
     "xrpl",

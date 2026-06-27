@@ -2,8 +2,16 @@ import { Client, Wallet } from 'xrpl';
 import { XRPLOrderManager } from '../orderManager.js';
 import { XRPLDashboard } from '../dashboard.js';
 import { db } from '../db.js';
+<<<<<<< Updated upstream
 import { config } from '../config.js';
 import { AbstractStrategy } from './AbstractStrategy.js';
+=======
+import { createLogger } from '../logger.js';
+import { IStrategy } from './IStrategy.js';
+import { config } from '../config.js';
+
+const log = createLogger('MarketMakerStrategy');
+>>>>>>> Stashed changes
 
 interface ActiveOrder {
   sequence: number;
@@ -14,11 +22,19 @@ interface ActiveOrder {
 export class XRPLMarketMakerStrategy extends AbstractStrategy {
   public readonly name = 'market_maker';
 
+<<<<<<< Updated upstream
   // === Parámetros de la estrategia (desde config / env vars) ===
   private baseSpread = config.mmBaseSpread;
   private minSpread = config.mmMinSpread;
   private maxSpread = config.mmMaxSpread;
   private orderAmountXRP = config.mmOrderAmountXrp.toString();
+=======
+  // === Parámetros de la estrategia (desde config/.env) ===
+  private baseSpread = config.mmBaseSpread;
+  private minSpread = config.mmMinSpread;
+  private maxSpread = config.mmMaxSpread;
+  private orderAmountXRP = config.rungQtyXrp;
+>>>>>>> Stashed changes
   private priceDeviationThreshold = config.mmPriceDeviationThreshold;
   private cooldownLedgers = config.mmCooldownLedgers;
   private maxPositionXRP = config.mmMaxPositionXrp;
@@ -33,7 +49,24 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
   private lastReplaceLedger: number = 0;
   private currentLedger: number = 0;
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  // Emisor de USD
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+>>>>>>> Stashed changes
     this.dashboard.updateState({
       walletAddress: this.wallet.address,
       strategyName: 'Market Maker (MM)'

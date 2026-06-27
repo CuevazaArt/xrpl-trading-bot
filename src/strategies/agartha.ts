@@ -17,7 +17,37 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
   public readonly name = 'agartha';
   private state: AgarthaState = { epochId: '', positionSize: 0, entryPrice: 0, peakPrice: 0, isTrailingActive: false, ledgersInPosition: 0 };
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  private client!: Client;
+  private wallet!: Wallet;
+  private orderManager!: XRPLOrderManager;
+  private dashboard!: XRPLDashboard;
+
+  private state: AgarthaState = {
+    epochId: '',
+    positionSize: 0,
+    entryPrice: 0,
+    peakPrice: 0,
+    isTrailingActive: false,
+    ledgersInPosition: 0
+  };
+
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+>>>>>>> Stashed changes
     this.loadState();
     this.dashboard.updateState({ walletAddress: this.wallet.address, strategyName: 'Agartha Moonshot Trailing' });
     this.log.info(`Agartha initialized: trailing_stop=${config.agarthaTrailingStopPct}%, activation_profit=${config.agarthaActivationProfitPct}%, offset=${config.agarthaEntryLimitOffsetPct}%`);

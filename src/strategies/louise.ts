@@ -9,7 +9,34 @@ export class XRPLBaseLouiseStrategy extends AbstractStrategy {
   public readonly name = 'louise';
   private state: LouiseState = { epochId: '', rungs: [], lastPurchasePrice: 0 };
 
+<<<<<<< Updated upstream
   protected async onInit(): Promise<void> {
+=======
+  private client!: Client;
+  private wallet!: Wallet;
+  private orderManager!: XRPLOrderManager;
+  private dashboard!: XRPLDashboard;
+
+  private state: LouiseState = {
+    epochId: '',
+    rungs: [],
+    lastPurchasePrice: 0
+  };
+
+  private usdIssuer = config.usdIssuer;
+
+  async init(
+    client: Client,
+    wallet: Wallet,
+    orderManager: XRPLOrderManager,
+    dashboard: XRPLDashboard
+  ): Promise<void> {
+    this.client = client;
+    this.wallet = wallet;
+    this.orderManager = orderManager;
+    this.dashboard = dashboard;
+
+>>>>>>> Stashed changes
     this.loadState();
     this.dashboard.updateState({ walletAddress: this.wallet.address, strategyName: 'Louise DCA Long' });
     this.log.info(`Louise initialized: profit_target=${config.louiseProfitTargetPct}%, dca_step=${config.louiseDcaStepPct}%, max_rungs=${config.maxRungs}`);
