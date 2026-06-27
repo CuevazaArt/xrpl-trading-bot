@@ -1,12 +1,10 @@
 import { Client, Wallet } from 'xrpl';
-<<<<<<< Updated upstream
 import { createLogger } from './logger.js';
-
-const log = createLogger('WalletManager');
-=======
 import { saveToEnv } from './utils.js';
 import { config } from './config.js';
->>>>>>> Stashed changes
+
+const log = createLogger('WalletManager');
+
 
 export class XRPLWalletManager {
   private client: Client;
@@ -50,26 +48,21 @@ export class XRPLWalletManager {
     } else {
       log.info('No se detectó semilla en las variables de entorno. Generando una nueva billetera local...');
       this.wallet = Wallet.generate();
-<<<<<<< Updated upstream
       log.info(`Nueva billetera generada localmente.`);
       log.info(`Dirección pública: ${this.wallet.address}`);
-      log.warn('[SEGURIDAD] Seed generado. Consulta el archivo .env para configurarlo. NO se imprime en logs por seguridad.');
-=======
-      console.log(`Nueva billetera generada localmente:`);
-      console.log(`Dirección pública: ${this.wallet.address}`);
-      console.log(`Clave semilla (SEED): ${this.wallet.seed}`);
+      log.info(`Clave semilla (SEED): ${this.wallet.seed}`);
       
       try {
         if (this.wallet.seed) {
           saveToEnv('XRPL_WALLET_SEED', this.wallet.seed);
-          console.log('¡Semilla guardada automáticamente en el archivo .env!');
+          log.info('¡Semilla guardada automáticamente en el archivo .env!');
         }
       } catch (err) {
-        console.error('Error al guardar la semilla generada en .env:', err);
+        log.error('Error al guardar la semilla generada en .env:', err);
       }
 
-      console.log(`[IMPORTANTE]: Guarda esta semilla en un lugar seguro para producción.`);
->>>>>>> Stashed changes
+      log.warn(`[SEGURIDAD] Guarda esta semilla en un lugar seguro para producción.`);
+
 
       // Si la red es de pruebas (Testnet/Devnet), solicitamos fondeo automático al Faucet
       const url = this.client.connection.getUrl();
@@ -187,7 +180,7 @@ export class XRPLWalletManager {
       }
 
       if (currentBalance < totalRequiredReserve) {
-        console.warn(`[WalletManager] ALERTA: Saldo XRP (${currentBalance.toFixed(4)}) < Reserva requerida (${totalRequiredReserve.toFixed(4)} XRP) [base=${baseReserveXrp}, owner=${ownerReserveXrp}×${ownerCount}=${ownerReserveXrp * ownerCount}, buffer=${config.minXrpReserveBuffer}]`);
+        log.warn(`ALERTA: Saldo XRP (${currentBalance.toFixed(4)}) < Reserva requerida (${totalRequiredReserve.toFixed(4)} XRP) [base=${baseReserveXrp}, owner=${ownerReserveXrp}×${ownerCount}=${ownerReserveXrp * ownerCount}, buffer=${config.minXrpReserveBuffer}]`);
         return false;
       }
 
@@ -196,7 +189,7 @@ export class XRPLWalletManager {
       if (error.data && error.data.error === 'actNotFound') {
         return false;
       }
-      console.error('Error al verificar la reserva de XRP de la cuenta:', error);
+      log.error('Error al verificar la reserva de XRP de la cuenta:', error);
       return false;
     }
   }

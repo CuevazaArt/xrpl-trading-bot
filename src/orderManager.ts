@@ -1,11 +1,9 @@
 import { Client, Wallet, OfferCreate, OfferCancel, SubmittableTransaction, Amount } from 'xrpl';
-<<<<<<< Updated upstream
 import { createLogger } from './logger.js';
+import { config } from './config.js';
 
 const log = createLogger('OrderManager');
-=======
-import { config } from './config.js';
->>>>>>> Stashed changes
+
 
 export class XRPLOrderManager {
   private client: Client;
@@ -39,7 +37,7 @@ export class XRPLOrderManager {
       if (prepared.Fee) {
         const feeDrops = parseInt(prepared.Fee, 10);
         if (feeDrops > config.maxFeeDrops) {
-          console.warn(`[OrderManager] Transacción ${txJSON.TransactionType} abortada: La comisión requerida (${feeDrops} drops) supera el límite máximo permitido (${config.maxFeeDrops} drops).`);
+          log.warn(`Transacción ${txJSON.TransactionType} abortada: La comisión requerida (${feeDrops} drops) supera el límite máximo permitido (${config.maxFeeDrops} drops).`);
           return { success: false, error: 'MAX_FEE_EXCEEDED' };
         }
       }
@@ -47,25 +45,15 @@ export class XRPLOrderManager {
       // 2. Firmar localmente con las claves privadas de la billetera
       const signed = wallet.sign(prepared);
       
-<<<<<<< Updated upstream
-      // 3. Enviar y esperar a que sea validada en un ledger cerrado
-      log.debug(`Enviando transacción ${txJSON.TransactionType}...`);
-      const result = await this.client.submitAndWait(signed.tx_blob);
-      
-      const txResult = (result.result.meta as any)?.TransactionResult;
-      if (txResult === 'tesSUCCESS') {
-        log.info(`¡Transacción ${txJSON.TransactionType} exitosa! Hash: ${result.result.hash}`);
-=======
       // 3. Enviar transacción de forma asíncrona (HFT)
-      console.log(`Enviando transacción ${txJSON.TransactionType} asíncronamente (HFT)...`);
+      log.debug(`Enviando transacción ${txJSON.TransactionType} asíncronamente (HFT)...`);
       const response = await this.client.submit(signed.tx_blob);
       
       const engineResult = response.result.engine_result;
       const isQueuedOrSuccess = engineResult === 'tesSUCCESS' || engineResult === 'terQUEUED';
 
       if (isQueuedOrSuccess) {
-        console.log(`¡Transacción ${txJSON.TransactionType} enviada con éxito! (Resultado: ${engineResult})`);
->>>>>>> Stashed changes
+        log.info(`¡Transacción ${txJSON.TransactionType} enviada con éxito! (Resultado: ${engineResult})`);
         return {
           success: true,
           hash: response.result.tx_json.hash,
@@ -73,27 +61,18 @@ export class XRPLOrderManager {
           result: response
         };
       } else {
-<<<<<<< Updated upstream
-        log.error(`Error en transacción ${txJSON.TransactionType}: ${txResult}`);
-        return { success: false, error: txResult, result: result };
-      }
-    } catch (error) {
-      log.error(`Excepción al enviar transacción ${txJSON.TransactionType}:`, error);
-      throw error;
-=======
-        console.error(`Error inmediato en la transacción ${txJSON.TransactionType}: ${engineResult}`);
+        log.error(`Error inmediato en la transacción ${txJSON.TransactionType}: ${engineResult}`);
         // Limpiar secuencia local en caso de error para auto-corregir con la red en el siguiente envío
         this.localSequenceMap.delete(walletAddress);
         return { success: false, error: engineResult, result: response };
       }
     } catch (error) {
-      console.error(`Excepción al enviar transacción ${txJSON.TransactionType}:`, error);
+      log.error(`Excepción al enviar transacción ${txJSON.TransactionType}:`, error);
       this.localSequenceMap.delete(walletAddress);
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error)
       };
->>>>>>> Stashed changes
     }
   }
 

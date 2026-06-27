@@ -2,7 +2,9 @@
  * Script de mantenimiento: Cancela TODAS las ofertas abiertas de la cuenta
  * para liberar la reserva de XRP bloqueada por OwnerCount elevado.
  *
- * Uso: npm.cmd run cleanup
+ * Versión HFT: envía cancelaciones en lotes asíncronos (~20x más rápido).
+ *
+ * Uso: npm run cleanup
  */
 import { Client, Wallet, OfferCancel } from 'xrpl';
 import { config } from './config.js';
@@ -12,6 +14,28 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const log = createLogger('Cleanup');
+
+const BATCH_SIZE = 10; // Cancelaciones simultáneas por lote
+const BATCH_DELAY_MS = 4000; // Esperar ~1 ledger entre lotes
+
+async function getAllOffers(client: Client, account: string): Promise<any[]> {
+  const allOffers: any[] = [];
+  let marker: any = undefined;
+
+  do {
+    const response: any = await client.request({
+      command: 'account_offers',
+      account,
+      ledger_index: 'validated',
+      limit: 400,
+      ...(marker ? { marker } : {})
+    });
+    allOffers.push(...(response.result.offers || []));
+    marker = response.result.marker;
+  } while (marker);
+
+  return allOffers;
+}
 
 async function cleanupOffers() {
   if (!config.walletSeed) {
@@ -26,7 +50,7 @@ async function cleanupOffers() {
   const wallet = Wallet.fromSeed(config.walletSeed);
   log.info(`Cuenta: ${wallet.address}`);
 
-  // 1. Obtener info de la cuenta antes de limpiar
+  // 1. Estado inicial
   const infoBefore = await client.request({
     command: 'account_info',
     account: wallet.address,
@@ -36,15 +60,8 @@ async function cleanupOffers() {
   const balanceBefore = await client.getXrpBalance(wallet.address);
   log.info(`Estado ANTES: OwnerCount=${ownerCountBefore}, Balance=${balanceBefore} XRP`);
 
-  // 2. Obtener todas las ofertas abiertas
-  const offersResponse = await client.request({
-    command: 'account_offers',
-    account: wallet.address,
-    ledger_index: 'validated',
-    limit: 400
-  });
-
-  const offers = offersResponse.result.offers || [];
+  // 2. Obtener TODAS las ofertas (con paginación)
+  const offers = await getAllOffers(client, wallet.address);
   log.info(`Ofertas abiertas encontradas: ${offers.length}`);
 
   if (offers.length === 0) {
@@ -53,45 +70,66 @@ async function cleanupOffers() {
     return;
   }
 
-  // 3. Cancelar cada oferta
+  // 3. Obtener secuencia inicial
+  const acctInfo = await client.request({
+    command: 'account_info',
+    account: wallet.address,
+    ledger_index: 'current'
+  });
+  let localSeq = acctInfo.result.account_data.Sequence;
+  log.info(`Secuencia inicial: ${localSeq}. Enviando en lotes de ${BATCH_SIZE}...`);
+
+  // 4. Cancelar en lotes asíncronos
   let cancelled = 0;
   let failed = 0;
 
-  for (const offer of offers) {
-    try {
-      const cancelTx: OfferCancel = {
-        TransactionType: 'OfferCancel',
-        Account: wallet.address,
-        OfferSequence: offer.seq
-      };
+  for (let i = 0; i < offers.length; i += BATCH_SIZE) {
+    const batch = offers.slice(i, i + BATCH_SIZE);
+    const promises = batch.map(async (offer) => {
+      const seq = localSeq++;
+      try {
+        const cancelTx: OfferCancel = {
+          TransactionType: 'OfferCancel',
+          Account: wallet.address,
+          OfferSequence: offer.seq,
+          Sequence: seq,
+          Fee: '12'
+        };
 
-      const prepared = await client.autofill(cancelTx);
-      const signed = wallet.sign(prepared);
-      const result = await client.submitAndWait(signed.tx_blob);
+        const prepared = await client.autofill(cancelTx, /* multisign */ undefined);
+        // Forzar la secuencia local (autofill puede sobreescribirla)
+        prepared.Sequence = seq;
+        const signed = wallet.sign(prepared);
+        const response = await client.submit(signed.tx_blob);
 
-      const meta = result.result.meta;
-      const engineResult = typeof meta === 'object' && meta !== null ? (meta as any).TransactionResult : 'unknown';
-
-      if (engineResult === 'tesSUCCESS') {
-        cancelled++;
-        if (cancelled % 10 === 0 || cancelled === offers.length) {
-          log.info(`Progreso: ${cancelled}/${offers.length} ofertas canceladas...`);
+        const engineResult = response.result.engine_result;
+        if (engineResult === 'tesSUCCESS' || engineResult === 'terQUEUED') {
+          cancelled++;
+        } else {
+          failed++;
+          log.warn(`Oferta seq=${offer.seq}: ${engineResult}`);
         }
-      } else {
+      } catch (error) {
         failed++;
-        log.warn(`Fallo al cancelar oferta seq=${offer.seq}: ${engineResult}`);
+        log.error(`Excepción oferta seq=${offer.seq}:`, (error as any).message || error);
       }
-    } catch (error) {
-      failed++;
-      log.error(`Excepción al cancelar oferta seq=${offer.seq}:`, error);
+    });
+
+    await Promise.all(promises);
+    const progress = Math.min(i + BATCH_SIZE, offers.length);
+    log.info(`Progreso: ${progress}/${offers.length} enviadas (ok=${cancelled}, fail=${failed})`);
+
+    // Esperar a que el ledger cierre para que se procesen
+    if (i + BATCH_SIZE < offers.length) {
+      await new Promise(r => setTimeout(r, BATCH_DELAY_MS));
     }
   }
 
-  // 4. Resultados
-  log.info(`--- LIMPIEZA COMPLETADA ---`);
-  log.info(`Canceladas: ${cancelled} | Fallidas: ${failed}`);
+  // 5. Esperar un poco para que el último lote se confirme
+  log.info('Esperando confirmación del último lote...');
+  await new Promise(r => setTimeout(r, 6000));
 
-  // 5. Estado final
+  // 6. Estado final
   const infoAfter = await client.request({
     command: 'account_info',
     account: wallet.address,
@@ -99,6 +137,9 @@ async function cleanupOffers() {
   });
   const ownerCountAfter = infoAfter.result.account_data.OwnerCount || 0;
   const balanceAfter = await client.getXrpBalance(wallet.address);
+
+  log.info(`--- LIMPIEZA COMPLETADA ---`);
+  log.info(`Canceladas: ${cancelled} | Fallidas: ${failed}`);
   log.info(`Estado DESPUÉS: OwnerCount=${ownerCountAfter}, Balance=${balanceAfter} XRP`);
   log.info(`Reserva liberada: OwnerCount bajó de ${ownerCountBefore} a ${ownerCountAfter} (${ownerCountBefore - ownerCountAfter} objetos eliminados)`);
 
@@ -109,3 +150,4 @@ cleanupOffers().catch(err => {
   log.error('Error fatal en limpieza:', err);
   process.exit(1);
 });
+

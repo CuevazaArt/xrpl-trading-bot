@@ -1,13 +1,10 @@
 import { Client, Wallet, TrustSet } from 'xrpl';
 import { XRPLOrderManager } from './orderManager.js';
-<<<<<<< Updated upstream
 import { createLogger } from './logger.js';
 import { config } from './config.js';
 
 const log = createLogger('TrustlineManager');
-=======
-import { config } from './config.js';
->>>>>>> Stashed changes
+
 
 export class XRPLTrustlineManager {
   private client: Client;

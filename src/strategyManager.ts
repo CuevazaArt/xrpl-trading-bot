@@ -12,6 +12,8 @@ import { CLIDashboard } from './cliDashboard.js';
 
 const log = createLogger('StrategyManager');
 
+const TICK_TIMEOUT_MS = 15_000; // 15 segundos máximo por tick
+
 export class XRPLStrategyManager {
   private client: Client;
   private wallet: Wallet;
@@ -22,10 +24,6 @@ export class XRPLStrategyManager {
 
   // Estrategia activa cargada desde la fábrica
   private strategy: IStrategy;
-
-  // Cache de oráculo para mitigación de caídas
-  private lastKnownPrice: number = 0;
-  private lastKnownPriceTimestamp: number = 0;
 
   // Estado del ledger
   private currentLedger: number = 0;
@@ -40,14 +38,16 @@ export class XRPLStrategyManager {
   constructor(
     client: Client,
     wallet: Wallet,
+    walletManager: XRPLWalletManager,
+    multiOracle: MultiOracle,
     dashboard: XRPLDashboard,
     paperOrderManager?: PaperOrderManager
   ) {
     this.client = client;
     this.wallet = wallet;
     this.dashboard = dashboard;
-<<<<<<< Updated upstream
-    this.multiOracle = new MultiOracle();
+    this.multiOracle = multiOracle;
+    this.walletManager = walletManager;
 
     // Paper trading: inyectar PaperOrderManager en vez del real
     if (paperOrderManager) {
@@ -57,11 +57,6 @@ export class XRPLStrategyManager {
     } else {
       this.orderManager = new XRPLOrderManager(client);
     }
-=======
-    this.orderManager = new XRPLOrderManager(client);
-    this.walletManager = new XRPLWalletManager(client);
-    this.walletManager.setWallet(wallet);
->>>>>>> Stashed changes
 
     // Cargar la estrategia activa según la variable de entorno STRATEGY
     log.info(`Cargando estrategia: '${config.strategy}'`);
@@ -115,7 +110,13 @@ export class XRPLStrategyManager {
       this.tickInProgress = true;
       log.info(`--- Tick #${this.tickCount} en Ledger #${this.currentLedger} [Bot: ${this.strategy.name}] ---`);
       try {
-        await this.tick();
+        // Timeout guard: evitar que un RPC colgado congele el bot indefinidamente
+        await Promise.race([
+          this.tick(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Tick timeout: superó ${TICK_TIMEOUT_MS / 1000}s`)), TICK_TIMEOUT_MS)
+          )
+        ]);
       } catch (error) {
         log.error(`Error durante el tick de la estrategia '${this.strategy.name}':`, error);
       } finally {
@@ -128,12 +129,6 @@ export class XRPLStrategyManager {
    * Ciclo principal ejecutado en cada bloque
    */
   private async tick() {
-<<<<<<< Updated upstream
-    // 1. Consultar precio de referencia desde el oráculo multi-fuente
-    const consensus = await this.multiOracle.getConsensusPrice();
-    if (!consensus || consensus.price <= 0) {
-      log.warn('No se pudo obtener precio de consenso (fuentes insuficientes). Saltando ciclo...');
-=======
     // 0. Verificar si la billetera tiene suficiente reserva de XRP
     const hasReserve = await this.walletManager.hasEnoughReserve();
     if (!hasReserve) {
@@ -141,11 +136,10 @@ export class XRPLStrategyManager {
       return;
     }
 
-    // 1. Consultar precio de referencia desde el oráculo (Coinbase)
-    const marketPrice = await this.getFairPrice();
-    if (marketPrice <= 0) {
-      log.warn('No se pudo calcular el precio del oráculo. Saltando ciclo...');
->>>>>>> Stashed changes
+    // 1. Consultar precio de referencia desde el oráculo multi-fuente
+    const consensus = await this.multiOracle.getConsensusPrice();
+    if (!consensus || consensus.price <= 0) {
+      log.warn('No se pudo obtener precio de consenso (fuentes insuficientes). Saltando ciclo...');
       return;
     }
 
@@ -198,7 +192,6 @@ export class XRPLStrategyManager {
    */
   async resubscribeLedger() {
     try {
-<<<<<<< Updated upstream
       await this.client.request({
         command: 'subscribe',
         streams: ['ledger']
@@ -206,37 +199,6 @@ export class XRPLStrategyManager {
       log.info('Suscripción a ledger stream restaurada.');
     } catch (error) {
       log.error('Error al suscribirse al stream de ledgers:', error);
-=======
-      const response = await fetch('https://api.coinbase.com/v2/prices/XRP-USD/spot');
-      if (!response.ok) {
-        throw new Error(`Coinbase API returned status ${response.status}`);
-      }
-      const data: any = await response.json();
-      const price = parseFloat(data.data.amount);
-      if (!isNaN(price) && price > 0) {
-        // Actualizar caché de precio
-        this.lastKnownPrice = price;
-        this.lastKnownPriceTimestamp = Date.now();
-        return price;
-      }
-      throw new Error('Precio inválido retornado por la API');
-    } catch (error) {
-      const timeSinceLastPrice = Date.now() - this.lastKnownPriceTimestamp;
-      const isCacheValid = this.lastKnownPrice > 0 && timeSinceLastPrice < config.oracleMaxAgeSeconds * 1000;
-
-      if (isCacheValid) {
-        log.warn(`Error de oráculo. Usando precio en caché: ${this.lastKnownPrice.toFixed(4)} USD (antigüedad: ${(timeSinceLastPrice / 1000).toFixed(1)}s).`);
-        return this.lastKnownPrice;
-      }
-
-      if (config.haltOnOracleFailure) {
-        log.error('ERROR CRÍTICO: Fallo del oráculo y no hay precio válido en caché. DETENIENDO operaciones de trading por seguridad.', (error as any).message);
-        return 0; // Provocará que tick() salte el ciclo
-      }
-
-      log.warn(`Fallo de oráculo y caché vencida. Usando precio fallback estático de 0.50 USD.`, (error as any).message);
-      return 0.50;
->>>>>>> Stashed changes
     }
   }
 

@@ -227,9 +227,12 @@ async function main() {
     log.info(`📝 Modo Paper Trading activado. Capital simulado: $${flags.simBalance} USDT`);
   }
 
-  // 9. Strategy Manager
+  // 9. Singleton: MultiOracle compartido (evitar instancias duplicadas)
+  const sharedOracle = new MultiOracle();
+
+  // 10. Strategy Manager (inyectar singletons)
   const strategyManager = new XRPLStrategyManager(
-    client, wallet, dashboardProxy, paperOrderManager || undefined
+    client, wallet, walletManager, sharedOracle, dashboardProxy, paperOrderManager || undefined
   );
 
   // Iniciar el CLI Dashboard si está activado
@@ -239,16 +242,18 @@ async function main() {
 
   await strategyManager.start();
 
-<<<<<<< Updated upstream
-  // 10. Health Monitor (condicional)
+  // 11. Arrancar escáner de arbitraje atómico en el mismo proceso (comparte client y wallet)
+  const { startArbitrageScanner } = await import('./arbitrage.js');
+  startArbitrageScanner(client, wallet);
+
+  // 12. Health Monitor (condicional)
   let healthMonitor: HealthMonitor | null = null;
   let telegram: TelegramNotifier | null = null;
 
   if (flags.telegram || flags.cliUi) {
     healthMonitor = new HealthMonitor(client);
 
-    // Inyectar MultiOracle compartido
-    const sharedOracle = new MultiOracle();
+    // Inyectar MultiOracle compartido (singleton — no crear otra instancia)
     healthMonitor.setOracle(sharedOracle);
 
     // Funds fetcher
@@ -326,13 +331,6 @@ async function main() {
 
   // Graceful shutdown
   const startTime = Date.now();
-=======
-  // 10. Arrancar escáner de arbitraje atómico en el mismo proceso (comparte client y wallet)
-  const { startArbitrageScanner } = await import('./arbitrage.js');
-  startArbitrageScanner(client, wallet);
-
-  // Manejo de apagado controlado (Graceful shutdown)
->>>>>>> Stashed changes
   const gracefulShutdown = async () => {
     log.info('Recibida señal de apagado. Limpiando recursos...');
     try {

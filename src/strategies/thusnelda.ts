@@ -7,21 +7,8 @@ interface ThusneldaState { positions: Record<string, TokenPosition>; }
 
 export class XRPLThusneldaStrategy extends AbstractStrategy {
   public readonly name = 'thusnelda';
-<<<<<<< Updated upstream
   private state: ThusneldaState = { positions: {} };
-=======
 
-  private client!: Client;
-  private wallet!: Wallet;
-  private orderManager!: XRPLOrderManager;
-  private dashboard!: XRPLDashboard;
-
-  private state: ThusneldaState = {
-    positions: {}
-  };
-
-  private usdIssuer = config.usdIssuer;
->>>>>>> Stashed changes
   private symbols: string[] = [];
   private currentSymbolIndex = 0;
 
