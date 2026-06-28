@@ -1,606 +1,6 @@
 {
   "transactions": [
     {
-      "timestamp": "2026-06-28T04:44:57.933Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "8D2273384BDC337357BA4D5902765DC6070ABD0300EA817D161D282CC40E6F68",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549515
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:44:58.107Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "26BC0586FFB895083A28A4FB3FC763D6A121671029A999BE712BD0CF2CDB9447",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0498486316279625,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:44:58.300Z",
-      "type": "VENTA_LIMITE",
-      "hash": "017850189483F34C500D0FB6A43B309297D34979C19A58BB4254213A5052FB31",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0529930816279625,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:06.823Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "FD4FED2E9D88E0BF6141A11DFB8F6A7CDF2947077F31F84A2DA2E090C4CB3667",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549518
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:07.000Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "D527A273BD480F8C431D007AC1C680783AF95A5D64F31491C3F6F440F4BF56C9",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549519
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:07.179Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "5B1205CC29FEB2D3D999D890DF3F09AF5770B1C4E22CB78276B61256A7CD4A81",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0498486284835125,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:07.358Z",
-      "type": "VENTA_LIMITE",
-      "hash": "0CDF528CD0C1A9C0B52317F80C103FC3D33F41EDE0099CDA326E21D9994C3155",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0529930784835126,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:20.480Z",
-      "type": "TRUSTLINE_USD",
-      "hash": "",
-      "status": "tesSUCCESS",
-      "detail": {
-        "detail": "Línea de confianza USD Bitstamp configurada"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:21.871Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "CDC81E80E63CE4A77C042DFA5737737748398A6FB7450AF0D89939E4077A095E",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0504696301071874,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:22.051Z",
-      "type": "VENTA_LIMITE",
-      "hash": "6E63287A90BCF74F6BEE41C27842B8FA71BF9743AFA92881553296E6BF8B904F",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0536159401071876,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:30.777Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "61A4514C41AC4D4AFAD84EA3C0748E93E7EE56CD9E20ED7026DED780F336AEBF",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549524
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:30.961Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "CF05E451360A88EEA0E18169C15E6A056DF801592D5AB6B8C479031FCCE2E9C5",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549525
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:31.144Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "76F7D773143499D0CD16C64CF8844701E8E8ED590DD109185C373531B4ABD61F",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0504696285340327,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:31.323Z",
-      "type": "VENTA_LIMITE",
-      "hash": "57C2E38A896BE56F795F7F2AE07358807B1DFDB21FFFB5DCA9A856ACD2680072",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0536159385340325,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:40.159Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "1987F70B8CCD8A6B5B47B1D5E80B67AEC4D76A31FAC4CBB347B94908E1519186",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549528
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:40.333Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "F8A2E1F9A2577B43C7B671CDF0730C5867A1E3115C995CC17527AF56CE56F136",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549529
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:40.512Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "4511CB0259CEC7C5A85093C1945BC7B782FF9C52A8731AF81BFC037B3F10C000",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0498686530341725,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:40.693Z",
-      "type": "VENTA_LIMITE",
-      "hash": "6C027FAA5F873C81B09BBEAB2418A276880D11E1B5023F6C15AA2E7BE9DC963E",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0530131630341726,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:49.801Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "6C4808E244F011908C2FBE73114468F1AEF073F67193F6B20AF3015823F9266D",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549532
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:49.975Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "2150395B4D7D8C128D1B64E736DD005ED25F10B4C5A273E211458740E9FA93BB",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549533
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:50.155Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "AEEAA827AB96172684993A867E8B4AA83F5ED6149D14876173704CF3508768D5",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0498686498896626,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:50.342Z",
-      "type": "VENTA_LIMITE",
-      "hash": "61FF81E0F31275E1A80F04CF99F1624A16C957E35482D6157C13067FD3EE73EB",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0530131598896626,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:53.737Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "F983CFE3DCA5FB903162B0E6A2D8A31CE677F584E1697D7ACC3532ECF07C6157",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549536
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:53.916Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "CDED7CFF130FAAAF7B82196131E2A1695A24B5C13306449702D95BBE0DA37E08",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549537
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:54.155Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "F70007A3F9EBDA27DB00970545F9101752AAD86A1A2D7A33E9A7350DFB733FB4",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0462000548896626,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:45:54.335Z",
-      "type": "VENTA_LIMITE",
-      "hash": "80307A34D629EF92E5ED2AA41554E222121F751421E020E7A4B4F893FDB2651A",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0566817548896623,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:03.203Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "35D2CDBFC85592020B1F8CB0D006F84AC23A5AA7BC31B4601B61EA3F67703521",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549540
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:03.382Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "A3602BC00295FC1301B0D2575DA798477C3DB7457940EDAA60D0E89604C85D73",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549541
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:03.561Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "476D1703788D1B1247C85E58E1CDE5021274180073B9B38CF04CAA3162C2A6C7",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0460201092764319,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:03.741Z",
-      "type": "VENTA_LIMITE",
-      "hash": "C47E780B2A9BF58D972DA7035331F35FFC76932099A8CEC3F7F8F3C7B8E52688",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0568015006900382,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:12.812Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "D45A22E9DBD169C665564C3E6FA5324EAF64DDBD0B085E58B1F19B0F471BE279",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549544
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:12.991Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "358584ED54BE6ED78FB18FD43CEE983573D4CE725C700587FDC4432613B64657",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549545
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:13.170Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "AD6F23B71C67D27C139387836A84B23A9BEDED033A2BAEB634E9621B14A59DD1",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0461701018388152,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:13.362Z",
-      "type": "VENTA_LIMITE",
-      "hash": "F7A2E3E467740AAC52E811DC74935DB5B970C9CCD3A0A806A632BC069A48F7C3",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.056651501838815,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:22.826Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "6CF930B508EFA95CFC5CF29AAC8D86376DE7482418664D9ECC41DE66340E4490",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549548
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:23.006Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "DE49818FC67313DD601B1C73A2F0269F4D4689CFAC87C765046135B047CE79D5",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549549
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:23.198Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "E5ACAD5C20573A87E99AC666BB030A3B4CFB2C59329492F06A4A7E7A9385DFB2",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0458098909062015,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:23.377Z",
-      "type": "VENTA_LIMITE",
-      "hash": "018E1C932F6D4EF383B244D0707236569BE2E86CD0AFBD4F21A9B5D20C9F6380",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0571922681859536,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:25.550Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "136D4B90196BC17E40B42DE984E56D19B628D4B6FB945EDC675D0ECFD1F491B3",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549552
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:46:25.732Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "E5B1BFDD94ACB1838ED861C0EC2BD5A3D65889719A78BF87BF69C146495A631E",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549553
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:47:41.781Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "4E6C451FFD2B4057BCEA8D4E9A39997F4FFED55110DB622C643190F60EFD818E",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0504095077025226,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:47:41.981Z",
-      "type": "VENTA_LIMITE",
-      "hash": "A13DD829E5EF6613AFF9FF36FF6001BDECD01C88E70DA561931C1ED37043DF0D",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0535556377025226,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:47:51.588Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "0C6802A1E6F79B4C6487D50C60308BA5A62F4ADF42DE630A7B03E953B1BFA0F9",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549556
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:47:51.770Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "B17A1AEFD8BADA8CC27EEB3617F3B08718352C53B4C1289B505F981ED79B9924",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549557
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:47:51.949Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "0678D3F5B55B28091BD5D93C78F7404B79E7D8507D6ED2CA0945173D470BD628",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0504095061294576,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:47:52.129Z",
-      "type": "VENTA_LIMITE",
-      "hash": "9AE0B13FFBA6DF96A661113454B29983DC95B1EA40A83477D4134D18C57AADB7",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0535556361294576,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:01.217Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "74D5CDAC256CEE66B8989B4AAB020B2EAD4C13F58309B8D28086BBCD3B369DBF",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549560
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:01.406Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "1FEB2824A2638E4C41639E3EBC4397CD1F935B7A836429CCD9C27B6088D029F4",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549561
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:01.585Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "7B07CC4512DA70EF1E1BBC858D45F54B32A4981BE6D97A12A5E70053495BB7D9",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.05021919507593,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:01.766Z",
-      "type": "VENTA_LIMITE",
-      "hash": "735558604C76D6CC191CC78E9171B2BE7B550CE0AA77C9499EE11771003EF8DD",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.05336475507593,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:10.844Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "32CB4456F3D1DF34C54515BA7614CE699E19A3E1A74BD8B290E358059AA1A7B8",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549564
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:11.023Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "422799BF74A6F052817D1474F25A01A4CA3C8D89C9068E22D36257D22A75A893",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549565
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:11.201Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "C76388E778C1D5446AC9768B67F28EF884522D943D651942B0665178626F45D8",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0507500508283627,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:11.401Z",
-      "type": "VENTA_LIMITE",
-      "hash": "044FFD22D53412753A3E380785BC9534A024EA13714F9FB3797E42B0218726EC",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0538972008283625,
-        "amount": 10,
-        "mode": "TIGHT_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:14.721Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "9EBDEF026F90CCD1FFD1C5AD6EEA380F1C392C3A8E710649B5C42E3A0807F67F",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549568
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:14.903Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "D52673CBB9D1D1CF507DB5A515A83574E392636FF24667B27B24B008AB680176",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549569
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:15.143Z",
-      "type": "COMPRA_LIMITE",
-      "hash": "6CAC068C29180BB464A80449F6E04B7B19833822CEDAA1F101AF9FB3E6A65EB8",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0470783758283626,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:15.321Z",
-      "type": "VENTA_LIMITE",
-      "hash": "6EC36FA8C3960EEF09C4CB1362A3E32EDEF87CFF8914BC4074D6E462C5AA80CD",
-      "status": "tesSUCCESS",
-      "detail": {
-        "price": 1.0575688758283623,
-        "amount": 10,
-        "mode": "STANDARD_PASSIVE"
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:24.322Z",
-      "type": "CANCELAR_COMPRA",
-      "hash": "D306525D1D137EA4B3B0CB6B74E295436BBB75D663E82BD9677F3ACB5BF8602F",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549572
-      }
-    },
-    {
-      "timestamp": "2026-06-28T04:48:24.507Z",
-      "type": "CANCELAR_VENTA",
-      "hash": "74641379447972B6C56232209C37BE7B149A9DB1403FE6687C4AA3F39C8F0F84",
-      "status": "tesSUCCESS",
-      "detail": {
-        "sequence": 18549573
-      }
-    },
-    {
       "timestamp": "2026-06-28T04:48:24.690Z",
       "type": "COMPRA_LIMITE",
       "hash": "E04E1E641F45D2DA60E16DDB7535136DB4325E730BB0A0E75EC6AF087DD4FFE1",
@@ -2003,99 +1403,609 @@
         "amount": 10,
         "mode": "TIGHT_PASSIVE"
       }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:31.802Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "C8680D6E129D4296B4394663C5560EA9DD9A00D3AC20FD1638CB69B168CE57A9",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549707
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:31.981Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "3CC2B2C8A9E24C14151800042C3519FB860A05C02F0B51D1C970CF709F9144BF",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549708
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:32.160Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "41CD41B5574EE5D27C0A61691AC5EBC72D25E180FCC04A9DFCEAB9A456D658DE",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.04920744281705,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:32.340Z",
+      "type": "VENTA_LIMITE",
+      "hash": "FD6D1F58AC8D94F7E0E8443DA7C1187963A9FD713B38604F639E8EBB89CD87AF",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.05234997281705,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:34.696Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "75E3A0CE4C1ECF41DDE2582B94AAC1FADB49B4A54F65BEBA92E5D46F50002A58",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549711
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:34.883Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "5BDD84B156A6ABE1DDFD3AD9A95462AE44523C04CC39E6D0E4F59A25A31F41D8",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549712
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:43.794Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:47.276Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "C7F8E73DE1F411DD4BD3824D904AA953DCE8FCEBC2C3277325C24CFEBFBC654F",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.049207438103255,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:47.460Z",
+      "type": "VENTA_LIMITE",
+      "hash": "74ADE6FE7E99DF38B6EEDFF69B6A14E610AF66D7ED6FB25C88966B7608ACAE5A",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0523499681032549,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:56.310Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "7A6B5294DFA6DEB4906A1DBB62609B9157DD19B8A66FD8D06FA0AF393908B656",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549715
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:56.505Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "EA32F6EEFA952FEA55663CD357AAA64EF20A87EFD94BA095906E67386355521F",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549716
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:56.689Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "0D6172EEAF2DE785B4DDFC8E9E0E831F6072AE33A4E837E34CB0512CC5BB71E4",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.04920743653199,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:55:56.873Z",
+      "type": "VENTA_LIMITE",
+      "hash": "1796472490DB35C427D58EEDD63A422D0C89EFEE2CFED2A3A6A02D62ECD571C2",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.05234996653199,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:05.215Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "3349AEAF2DECF829E8E01088ABFDC0B53C0D926DAB233AC5834144C396C151AD",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549719
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:05.393Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "C47B2C81B9CE77FA798AC9B3AFD6F5B3B20776EC81DEBD77900F271AB33283DE",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549720
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:05.577Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "7EBED1B70527204028438F6172D9ABF8B0BC69EAB90167DE867701425844BE26",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0492074333894599,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:05.757Z",
+      "type": "VENTA_LIMITE",
+      "hash": "C7CDD3D7B264B0D3773E5C37F9D4B86D20031D8B62060470F927AAF62B49A886",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.05234996338946,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:15.793Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "917F838F8C7851A43F57E089F4A32FBE81AC0D339BFE5C0E5DE4FDDD92497A81",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549723
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:15.972Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "90F5E2F1D2EFB2194CABC54F6118BF3368F77FE6E696F75045BA81AA83E84EBE",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549724
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:16.152Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "1751E17EE4AE6EEFFB1D5B2EE669219F931FABF6FF49A7CBD096B6099326B218",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0491974140425,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:16.329Z",
+      "type": "VENTA_LIMITE",
+      "hash": "14650C581FE8AF5F31F6F38366CA4BF772D0731E0BD83CFAEAC42E3A7CEDA57C",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0523399140425003,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:18.603Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "857451364B1ECDCAD5704C3DB9858D5C1DEF865B1A316428AD039FFACAF2D4D9",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549727
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:18.783Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "E77EE2C1468F482339C70967DEAF560ED00D8D9AD1AF211C0AB9F1C77C889EDC",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549728
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:19.022Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "32136D050F928C6EBC34D2DC0BCEE17AEE703BF0197A028C95B6AE0E66E58D3E",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0455311640425,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:19.209Z",
+      "type": "VENTA_LIMITE",
+      "hash": "90C4FEE5239483C02BFFE859097887C53D64C00CDE36650E1C05F1B42E6D6F2A",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0560061640425,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:28.245Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "B2A7D00CA7058E58E28F7B47F4467CF0152A7938FD93391C072D330CA815104D",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549731
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:28.428Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "ACE22B6D237169BE47AA41E2A20C472F00FB2AAD1BD791539137551D81DC48EF",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549732
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:28.607Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "6B0462EACDE6CDE7CE6875E0C479CD889C2CD0C465DF79776B37AE9F864B81B7",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0455311577575002,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:28.787Z",
+      "type": "VENTA_LIMITE",
+      "hash": "BEDE1A0B49D3AFE01F546946AC9EAE3B87ECF6E06B5EF04FC8E47EED6394001E",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0560061577575,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:35.177Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:38.136Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "0C2FE7829419225E70B65B77C63AB37A1602863F806638915C8EDFF82452CF70",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.04920742081934,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:38.315Z",
+      "type": "VENTA_LIMITE",
+      "hash": "D4E10F806293BC8E3E89F1CB5345CABD59B0276A44147E882A340605DCD4A579",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.05234995081934,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:48.237Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "F8112186A17E3CD92E97CCD8D87AA078C542BD066AD402C6A4B18C25596CA3D5",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549737
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:48.416Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "3271B52EEF3B17C369206ACF7DDB6511406D18EDD0F0391A32E4890CAACDB671",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549738
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:48.591Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "AE3755DABE0EBDFF0D66356BD62AEB9A6DD132870284CF94AD1B9B4A1CD29DB0",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.049207419248075,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:48.766Z",
+      "type": "VENTA_LIMITE",
+      "hash": "6DD06C8757B0C8551D6C2E7D8406DEA3F1ED5869605CCDEACBFB965935AB7A2E",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.052349949248075,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:58.064Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "480896315FBA8563DFD81D60AA8806A7920AE5A808CC206C1AAAE789F9195B3C",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549741
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:58.240Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "7D36AA27A517A9FECF832DB4CE359A67059EC1695686F0039BCEF4652D48218F",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549742
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:58.414Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "5D343EA25A72F83053080510C91BF0398C9D2A2039CDAA72C8B1BC8724FC0102",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.049207416105545,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:56:58.589Z",
+      "type": "VENTA_LIMITE",
+      "hash": "FDAFC315654E597E4D1A8EF4505814EE3579FBE4A5875D9C73E8B73312CB5F76",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.052349946105545,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:07.439Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "F2A743C54A41E078936E4B8D29B7191FE2D10F57EB4DCA9AFC9C389D054DB8A6",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549745
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:07.613Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "39FB9F53B2E08CECB868C693731623AA1B54AE3CD78923485E213794A9D4B3F4",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549746
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:07.800Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "A66C9BBE9B4D412CE09AE2387A4CF0494A5E93D21D975FCAED5C375D7AE9C1C4",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0492074129630151,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:07.976Z",
+      "type": "VENTA_LIMITE",
+      "hash": "87E85952DD73AD183B7E9F8773D8D92D6D38ED8DBD8CC20ADB21C54D025496B7",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.052349942963015,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:11.154Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "76626327161BFF25BB5C54540D333DEC142E50389ACCCAD75F492F5DCACF123A",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549749
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:11.345Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "1CFF4513EF0C3EC5FC68742B0F4CC4063D620424ACB7EB28D771DDC73CE367F4",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549750
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:11.580Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "C38A1080A4622B46B67560F82BFF5DE5935997CCA84EC7D0D201E391193C4EF2",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.045541127963015,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:11.755Z",
+      "type": "VENTA_LIMITE",
+      "hash": "A428C5B8C6F29469ED34BEC27C25B866107933696ABD60D1B6CD3111515DE639",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0560162279630148,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:20.264Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "D16311FF76792E88CEBABD833BA562169E10C6FBC987AB1D35DE829D40FF8192",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549753
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:20.456Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "9539FEAB98F1A41848480503E1FE95BAB55C077BE4AF6B35C51BF5C14D60534F",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549754
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:20.631Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "CFC05A0EB28305505FBFE126256EE2CF9FBBEA293CB7F6FD7C9856604E056D17",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.045541121677955,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:20.806Z",
+      "type": "VENTA_LIMITE",
+      "hash": "1071D7F2DC90DE3EA33ED7670195D73387E085FC9DA14BC15E71AFE82B5331CA",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0560162216779547,
+        "amount": 10,
+        "mode": "STANDARD_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:30.235Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "47289F5D4CDACCC3E9B8CAEDA25F061AD8E8CAC3AD754D81B266B1CAAB996CB2",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549757
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:31.320Z",
+      "type": "TRUSTLINE_USD",
+      "hash": "",
+      "status": "tesSUCCESS",
+      "detail": {
+        "detail": "Línea de confianza USD Bitstamp configurada"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:34.223Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "80B2E9060BA179278D2F57052A474960FB863ADFA424AD2E4D4116BE010E9D63",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0491973873312501,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:34.412Z",
+      "type": "VENTA_LIMITE",
+      "hash": "4241F058844EE58750616C58225ED20C099B459D3C7EBA73D1A9C905B026774F",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0523398873312502,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:43.502Z",
+      "type": "CANCELAR_COMPRA",
+      "hash": "6223792CB6E3A309E225F343CC497B8FB7EA17DF1B17ADE018EDA1B76D280CC3",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549760
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:43.679Z",
+      "type": "CANCELAR_VENTA",
+      "hash": "F414BD5422BF43BDF2829A64625ED76F31A23466BC93BF8D0375D963826FDCB5",
+      "status": "tesSUCCESS",
+      "detail": {
+        "sequence": 18549761
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:43.863Z",
+      "type": "COMPRA_LIMITE",
+      "hash": "98E8CB90D41882468E8A1406F815ACAEE36F31C758D69D412D9E87C7A48E2AAE",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.0491973849743752,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
+    },
+    {
+      "timestamp": "2026-06-28T04:57:44.055Z",
+      "type": "VENTA_LIMITE",
+      "hash": "C4DDB55043FFAE2B15DA0B636D2B209B6F461E32F60EAEB87709B097F5D39F72",
+      "status": "tesSUCCESS",
+      "detail": {
+        "price": 1.052339884974375,
+        "amount": 10,
+        "mode": "TIGHT_PASSIVE"
+      }
     }
   ],
   "balances": [
-    {
-      "timestamp": "2026-06-27T23:11:19.967Z",
-      "xrp": "99.950308",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:12:40.674Z",
-      "xrp": "99.950236",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:12:51.026Z",
-      "xrp": "99.950212",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:13:00.728Z",
-      "xrp": "99.950164",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:13:10.047Z",
-      "xrp": "99.950116",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:13:13.925Z",
-      "xrp": "99.950116",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:13:23.671Z",
-      "xrp": "99.95002",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:13:33.085Z",
-      "xrp": "99.949972",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:13:42.993Z",
-      "xrp": "99.949924",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:02.632Z",
-      "xrp": "99.949852",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:12.151Z",
-      "xrp": "99.949828",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:22.126Z",
-      "xrp": "99.94978",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:31.057Z",
-      "xrp": "99.949732",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:34.727Z",
-      "xrp": "99.949732",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:44.178Z",
-      "xrp": "99.949636",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:15:54.808Z",
-      "xrp": "99.949588",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:16:05.135Z",
-      "xrp": "99.94954",
-      "usd": "10000"
-    },
-    {
-      "timestamp": "2026-06-27T23:17:24.771Z",
-      "xrp": "99.949456",
-      "usd": "10000"
-    },
     {
       "timestamp": "2026-06-27T23:17:34.855Z",
       "xrp": "99.949432",
@@ -4504,6 +4414,96 @@
     {
       "timestamp": "2026-06-28T04:55:23.418Z",
       "xrp": "99.927328",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:55:32.461Z",
+      "xrp": "99.92728",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:55:43.728Z",
+      "xrp": "99.927208",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:55:47.581Z",
+      "xrp": "99.927208",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:55:56.995Z",
+      "xrp": "99.927184",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:05.877Z",
+      "xrp": "99.927136",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:16.449Z",
+      "xrp": "99.927088",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:19.331Z",
+      "xrp": "99.927088",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:28.905Z",
+      "xrp": "99.926992",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:35.119Z",
+      "xrp": "99.926944",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:38.434Z",
+      "xrp": "99.926944",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:48.884Z",
+      "xrp": "99.92692",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:56:58.707Z",
+      "xrp": "99.926872",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:57:08.094Z",
+      "xrp": "99.926824",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:57:11.870Z",
+      "xrp": "99.926824",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:57:20.926Z",
+      "xrp": "99.926728",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:57:31.262Z",
+      "xrp": "99.92668",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:57:34.543Z",
+      "xrp": "99.92668",
+      "usd": "10000"
+    },
+    {
+      "timestamp": "2026-06-28T04:57:44.172Z",
+      "xrp": "99.926644",
       "usd": "10000"
     }
   ],

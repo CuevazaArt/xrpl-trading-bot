@@ -28,10 +28,18 @@ enum CarouselMode {
 }
 
 const MODE_LABELS: Record<CarouselMode, string> = {
-  [CarouselMode.TIGHT_PASSIVE]: '🔵 Tight Passive',
-  [CarouselMode.STANDARD_PASSIVE]: '🟢 Standard Passive',
-  [CarouselMode.AGGRESSIVE_IOC]: '🔴 Aggressive IOC',
-  [CarouselMode.REST_OBSERVE]: '⚪ Rest/Observe',
+  [CarouselMode.TIGHT_PASSIVE]: '\x1b[94mTIGHT\x1b[0m',
+  [CarouselMode.STANDARD_PASSIVE]: '\x1b[92mSTANDARD\x1b[0m',
+  [CarouselMode.AGGRESSIVE_IOC]: '\x1b[91mIOC\x1b[0m',
+  [CarouselMode.REST_OBSERVE]: '\x1b[2mREST\x1b[0m',
+};
+
+// Short tags for inline log use (no ANSI, for file logging)
+const MODE_SHORT: Record<CarouselMode, string> = {
+  [CarouselMode.TIGHT_PASSIVE]: 'TIGHT',
+  [CarouselMode.STANDARD_PASSIVE]: 'STD',
+  [CarouselMode.AGGRESSIVE_IOC]: 'IOC',
+  [CarouselMode.REST_OBSERVE]: 'REST',
 };
 
 const MODE_ORDER: CarouselMode[] = [
@@ -278,7 +286,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     const bestBid = midPrice * 0.999;
     const bestAsk = midPrice * 1.001;
 
-    this.log.info(`🔵 [TIGHT] Precios: Bid=${bestBid.toFixed(4)} | Ask=${bestAsk.toFixed(4)} | Medio=${midPrice.toFixed(4)} USD`);
+    this.log.debug(`[${MODE_SHORT[this.carouselMode]}] Mid=${midPrice.toFixed(4)} Bid=${bestBid.toFixed(4)} Ask=${bestAsk.toFixed(4)}`);
 
     // Cooldown
     if (this.currentLedger - this.lastReplaceLedger < this.cooldownLedgers) {
@@ -294,7 +302,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     const targetBuyPrice = midPrice * (1 - effectiveSpread / 2 + inventoryBias);
     const targetSellPrice = midPrice * (1 + effectiveSpread / 2 + inventoryBias);
 
-    this.log.info(`🔵 [TIGHT] Objetivos: Compra=${targetBuyPrice.toFixed(4)} | Venta=${targetSellPrice.toFixed(4)} USD (spread: ${(effectiveSpread * 100).toFixed(2)}%)`);
+    this.log.debug(`[TIGHT] Bid=${targetBuyPrice.toFixed(4)} Ask=${targetSellPrice.toFixed(4)} (spread: ${(effectiveSpread * 100).toFixed(2)}%)`);
 
     const needsReplace = this.shouldReplaceOrders(midPrice, targetBuyPrice, targetSellPrice);
     const hasMissingOrders = this.activeBuy === null || this.activeSell === null;
@@ -318,7 +326,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     const bestBid = midPrice * 0.999;
     const bestAsk = midPrice * 1.001;
 
-    this.log.info(`🟢 [STD] Precios: Bid=${bestBid.toFixed(4)} | Ask=${bestAsk.toFixed(4)} | Medio=${midPrice.toFixed(4)} USD`);
+    this.log.debug(`[${MODE_SHORT[this.carouselMode]}] Mid=${midPrice.toFixed(4)} Bid=${bestBid.toFixed(4)} Ask=${bestAsk.toFixed(4)}`);
 
     // Cooldown
     if (this.currentLedger - this.lastReplaceLedger < this.cooldownLedgers) {
@@ -331,7 +339,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     const targetBuyPrice = midPrice * (1 - dynamicSpread / 2 + inventoryBias);
     const targetSellPrice = midPrice * (1 + dynamicSpread / 2 + inventoryBias);
 
-    this.log.info(`🟢 [STD] Objetivos: Compra=${targetBuyPrice.toFixed(4)} | Venta=${targetSellPrice.toFixed(4)} USD`);
+    this.log.debug(`[STD] Bid=${targetBuyPrice.toFixed(4)} Ask=${targetSellPrice.toFixed(4)}`);
 
     const needsReplace = this.shouldReplaceOrders(midPrice, targetBuyPrice, targetSellPrice);
     const hasMissingOrders = this.activeBuy === null || this.activeSell === null;
@@ -352,7 +360,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
 
   private async tickAggressiveIOC(marketPrice: number): Promise<void> {
     const midPrice = marketPrice;
-    this.log.info(`🔴 [IOC] Oracle mid: ${midPrice.toFixed(4)} USD — Escaneando DEX orderbook...`);
+    this.log.debug(`[IOC] Scanning DEX book. Oracle mid: ${midPrice.toFixed(4)}`);
 
     const stats = this.modeStats[CarouselMode.AGGRESSIVE_IOC];
     stats.iocAttempts++;
@@ -454,7 +462,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       }
 
       if (!acted) {
-        this.log.info(`🔴 [IOC] Sin edge suficiente (min: ${(config.mmIocMinDexEdge * 100).toFixed(2)}%). Esperando...`);
+        this.log.debug(`[IOC] No edge (min: ${(config.mmIocMinDexEdge * 100).toFixed(2)}%)`);
       }
     } catch (error) {
       this.log.error('🔴 [IOC] Error al leer orderbook DEX:', error);
@@ -545,7 +553,10 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
 
   private async tickRestObserve(marketPrice: number): Promise<void> {
     const midPrice = marketPrice;
-    this.log.info(`⚪ [REST] Observando mercado. Mid: ${midPrice.toFixed(4)} USD. Sin órdenes activas.`);
+    // Only log REST every 10 ticks to avoid spam
+    if (this.tickCount % 10 === 0) {
+      this.log.info(`[REST] Mid: ${midPrice.toFixed(4)} USD`);
+    }
 
     // Aprovechar el descanso para refrescar el cache de fees
     if (Date.now() - this.feeCacheTimestamp > FEE_CACHE_TTL_MS) {
