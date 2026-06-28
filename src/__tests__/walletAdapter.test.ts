@@ -37,8 +37,14 @@ describe('Wallet Adapter Pattern', () => {
   });
 
   describe('EOAWalletAdapter', () => {
+    let seed: string;
+
+    beforeEach(() => {
+      const w = Wallet.generate();
+      seed = w.seed!;
+    });
+
     it('debe inicializarse correctamente con una semilla de billetera', async () => {
-      const seed = 'sEdV3qkRMjNjbEHRdS7vUoWw3hA6mZ9'; // testnet seed válida
       const adapter = new EOAWalletAdapter(mockClient, seed);
       
       await adapter.initialize();
@@ -48,7 +54,6 @@ describe('Wallet Adapter Pattern', () => {
     });
 
     it('debe obtener balances de XRP e IOU tokens usando el cliente', async () => {
-      const seed = 'sEdV3qkRMjNjbEHRdS7vUoWw3hA6mZ9';
       const adapter = new EOAWalletAdapter(mockClient, seed);
       await adapter.initialize();
 
@@ -59,11 +64,12 @@ describe('Wallet Adapter Pattern', () => {
     });
 
     it('debe firmar y ejecutar transacciones localmente con exito', async () => {
-      const seed = 'sEdV3qkRMjNjbEHRdS7vUoWw3hA6mZ9';
       const adapter = new EOAWalletAdapter(mockClient, seed);
       await adapter.initialize();
 
-      const tx = { TransactionType: 'Payment', Account: 'rAddress', Destination: 'rDest', Amount: '1000' } as any;
+      const addr = await adapter.getAddress();
+      const dest = Wallet.generate().address;
+      const tx = { TransactionType: 'Payment', Account: addr, Destination: dest, Amount: '1000' } as any;
       const res = await adapter.signAndExecute(tx);
 
       expect(res.success).toBe(true);
