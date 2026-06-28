@@ -2,6 +2,13 @@ import { db } from '../db.js';
 import { config } from '../config.js';
 import { AbstractStrategy } from './AbstractStrategy.js';
 
+interface GenericCandle {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
 interface DorothyRung {
   buySequence?: number;
   buyPrice: number;
@@ -110,40 +117,91 @@ export class XRPLDorothyStrategy extends AbstractStrategy {
   }
 
   private async checkTrendGates(marketPrice: number): Promise<{ trendOk: boolean; entryOk: boolean; candleOpen1h: number }> {
+    let candles: GenericCandle[] = [];
+
+    // 1. Intentar Binance (Oráculo Principal)
     try {
       const res = await fetch('https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=1h&limit=10');
-      if (!res.ok) throw new Error(`Binance API returned ${res.status}`);
-      const klines = (await res.json()) as any[];
-
-      if (!klines || klines.length < 2) {
-        return { trendOk: true, entryOk: true, candleOpen1h: marketPrice };
+      if (!res.ok) throw new Error(`Binance returned ${res.status}`);
+      const data = (await res.json()) as any[];
+      if (Array.isArray(data) && data.length >= 2) {
+        candles = data.map(k => ({
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4])
+        }));
       }
+    } catch (e: any) {
+      this.log.warn(`Oráculo principal (Binance) falló: ${e.message}. Probando Kraken...`);
+    }
 
-      let prevHAOpen = parseFloat(klines[0][1]);
-      let prevHAClose = parseFloat(klines[0][4]);
+    // 2. Intentar Kraken (Respaldo 1)
+    if (candles.length === 0) {
+      try {
+        const res = await fetch('https://api.kraken.com/0/public/OHLC?pair=XRPUSD&interval=60');
+        if (!res.ok) throw new Error(`Kraken returned ${res.status}`);
+        const data = (await res.json()) as any;
+        const keys = Object.keys(data.result || {});
+        const pairKey = keys.find(k => k !== 'last');
+        const rawCandles = pairKey ? data.result[pairKey] : [];
+        if (Array.isArray(rawCandles) && rawCandles.length >= 2) {
+          const slice = rawCandles.slice(-10);
+          candles = slice.map((k: any) => ({
+            open: parseFloat(k[1]),
+            high: parseFloat(k[2]),
+            low: parseFloat(k[3]),
+            close: parseFloat(k[4])
+          }));
+        }
+      } catch (e: any) {
+        this.log.warn(`Oráculo secundario (Kraken) falló: ${e.message}. Probando CryptoCompare...`);
+      }
+    }
 
-      const haCandles = klines.map((k) => {
-        const o = parseFloat(k[1]);
-        const h = parseFloat(k[2]);
-        const l = parseFloat(k[3]);
-        const c = parseFloat(k[4]);
-        const haClose = (o + h + l + c) / 4;
-        const haOpen = (prevHAOpen + prevHAClose) / 2;
-        prevHAOpen = haOpen;
-        prevHAClose = haClose;
-        return { haOpen, haClose };
-      });
+    // 3. Intentar CryptoCompare (Respaldo 2)
+    if (candles.length === 0) {
+      try {
+        const res = await fetch('https://min-api.cryptocompare.com/data/v2/histohour?fsym=XRP&tsym=USD&limit=10');
+        if (!res.ok) throw new Error(`CryptoCompare returned ${res.status}`);
+        const data = (await res.json()) as any;
+        const rawCandles = data.Data?.Data;
+        if (Array.isArray(rawCandles) && rawCandles.length >= 2) {
+          candles = rawCandles.map((k: any) => ({
+            open: parseFloat(k.open),
+            high: parseFloat(k.high),
+            low: parseFloat(k.low),
+            close: parseFloat(k.close)
+          }));
+        }
+      } catch (e: any) {
+        this.log.warn(`Oráculo terciario (CryptoCompare) falló: ${e.message}.`);
+      }
+    }
 
-      const lastHA = haCandles[haCandles.length - 1];
-      const trendOk = lastHA.haClose > lastHA.haOpen;
-      const lastRegularOpen = parseFloat(klines[klines.length - 1][1]);
-      const entryOk = marketPrice < lastRegularOpen;
-
-      return { trendOk, entryOk, candleOpen1h: lastRegularOpen };
-    } catch (error) {
-      this.log.warn('Error al verificar compuertas de tendencia:', (error as any).message);
+    // Si todos fallaron, permitir entrada por defecto
+    if (candles.length === 0) {
+      this.log.warn('⚠️ Todos los oráculos de tendencia fallaron. Permitiendo entrada de seguridad por defecto.');
       return { trendOk: true, entryOk: true, candleOpen1h: marketPrice };
     }
+
+    let prevHAOpen = candles[0].open;
+    let prevHAClose = candles[0].close;
+
+    const haCandles = candles.map((k) => {
+      const haClose = (k.open + k.high + k.low + k.close) / 4;
+      const haOpen = (prevHAOpen + prevHAClose) / 2;
+      prevHAOpen = haOpen;
+      prevHAClose = haClose;
+      return { haOpen, haClose };
+    });
+
+    const lastHA = haCandles[haCandles.length - 1];
+    const trendOk = lastHA.haClose > lastHA.haOpen;
+    const lastRegularOpen = candles[candles.length - 1].open;
+    const entryOk = marketPrice < lastRegularOpen;
+
+    return { trendOk, entryOk, candleOpen1h: lastRegularOpen };
   }
 
   private async executeBuyAndPlaceTP(marketPrice: number) {
