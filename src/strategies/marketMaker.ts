@@ -98,6 +98,18 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
   // === P&L Tracker ===
   private pnlTracker = new PnLTracker();
 
+  // === Production Safety ===
+  private sessionStartTime = Date.now();
+  private sessionFeesDrops = 0;            // Fees acumulados esta sesión
+  private isPaused = false;                // Circuit breaker activado
+  private pauseReason = '';
+  private lastBalanceCheck = 0;            // Timestamp del último balance check
+  private cachedXrpBalance = 0;
+  private readonly BALANCE_CHECK_INTERVAL_MS = 30_000; // Verificar balance cada 30s
+  private readonly MAX_SESSION_FEE_DROPS = config.mmMaxSessionFeeDrops;
+  private readonly MAX_LOSS_USD = config.mmMaxLossUsd;
+  private readonly MIN_XRP_OPERATIONAL = config.minXrpReserveBuffer + 10; // Reserva + buffer
+
   protected async onInit(): Promise<void> {
     this.dashboard.updateState({
       walletAddress: this.wallet.address,
@@ -119,6 +131,20 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     if (this.modeStartLedger === 0) {
       this.modeStartLedger = currentLedger;
     }
+
+    // ── CIRCUIT BREAKER: verificar si Helena debe pausarse ──
+    if (this.isPaused) {
+      // Log reducido cada 30 ledgers (~90s) para no spamear
+      if (currentLedger % 30 === 0) {
+        this.log.warn(`🛑 [PAUSED] ${this.pauseReason}. Cancelando órdenes y esperando...`);
+      }
+      await this.cancelActiveOrders();
+      return;
+    }
+
+    // ── SAFETY CHECKS ──
+    await this.runSafetyChecks(marketPrice);
+    if (this.isPaused) return;
 
     // 1. Verificar si la ventana del modo actual expiró → rotar
     const modeDuration = this.getModeDuration(this.carouselMode);
@@ -150,6 +176,51 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
 
     // 5. Actualizar tracking
     this.lastPrice = marketPrice;
+  }
+
+  // =====================================================================
+  // PRODUCTION SAFETY — Stop Loss, Circuit Breaker, Balance Check
+  // =====================================================================
+
+  private async runSafetyChecks(marketPrice: number): Promise<void> {
+    // 1. Circuit Breaker: fees excesivos
+    if (this.sessionFeesDrops > this.MAX_SESSION_FEE_DROPS) {
+      this.pauseBot(`Fees acumulados (${this.sessionFeesDrops} drops) superan límite (${this.MAX_SESSION_FEE_DROPS} drops)`);
+      return;
+    }
+
+    // 2. Stop Loss: P&L negativo más allá del umbral
+    const pnl = this.pnlTracker.getSummary();
+    if (pnl.totalNetProfitUsd < -this.MAX_LOSS_USD) {
+      this.pauseBot(`Stop-loss activado: P&L neto $${pnl.totalNetProfitUsd.toFixed(4)} supera pérdida máxima -$${this.MAX_LOSS_USD.toFixed(2)}`);
+      return;
+    }
+
+    // 3. Balance check: verificar reserva XRP cada 30s
+    const now = Date.now();
+    if (now - this.lastBalanceCheck > this.BALANCE_CHECK_INTERVAL_MS) {
+      this.lastBalanceCheck = now;
+      try {
+        const balStr = await this.client.getXrpBalance(this.wallet.address);
+        this.cachedXrpBalance = typeof balStr === 'string' ? parseFloat(balStr) : balStr;
+
+        if (this.cachedXrpBalance < this.MIN_XRP_OPERATIONAL) {
+          this.pauseBot(`XRP balance (${this.cachedXrpBalance.toFixed(2)}) bajo mínimo operacional (${this.MIN_XRP_OPERATIONAL.toFixed(2)} XRP)`);
+          return;
+        }
+      } catch {
+        this.log.warn('⚠️ No se pudo verificar balance XRP, continuando con cache.');
+      }
+    }
+  }
+
+  private pauseBot(reason: string): void {
+    if (!this.isPaused) {
+      this.isPaused = true;
+      this.pauseReason = reason;
+      this.log.error(`🛑 CIRCUIT BREAKER: ${reason}`);
+      this.log.error('🛑 Helena pausada. Reiniciar manualmente para reactivar.');
+    }
   }
 
   async cleanup(): Promise<void> {
@@ -341,6 +412,12 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
   }
 
   private async executeIOCSell(targetPrice: number): Promise<void> {
+    // Balance check rápido antes de operar
+    if (this.cachedXrpBalance > 0 && this.cachedXrpBalance < this.MIN_XRP_OPERATIONAL + parseFloat(this.orderAmountXRP)) {
+      this.log.warn(`🔴 [IOC] Balance insuficiente (${this.cachedXrpBalance.toFixed(2)} XRP). Saltando SELL.`);
+      return;
+    }
+
     const xrpAmount = parseFloat(this.orderAmountXRP);
     const usdValue = (xrpAmount * targetPrice).toFixed(4);
 
@@ -357,7 +434,19 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       if (result.success) {
         this.modeStats[CarouselMode.AGGRESSIVE_IOC].fills++;
         this.modeStats[CarouselMode.AGGRESSIVE_IOC].feesSpentDrops += EST_FEE_DROPS_PER_TX;
+        this.sessionFeesDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('IOC_VENTA', result.hash || '', 'tesSUCCESS', { price: targetPrice, amount: xrpAmount });
+        // Registrar en P&L tracker
+        this.pnlTracker.recordFill({
+          side: 'SELL',
+          price: targetPrice,
+          amount: xrpAmount,
+          usdAmount: parseFloat(usdValue),
+          feeDrops: EST_FEE_DROPS_PER_TX,
+          hash: result.hash || '',
+          timestamp: new Date().toISOString(),
+          mode: CarouselMode.AGGRESSIVE_IOC,
+        });
       }
     } catch (error) {
       this.log.error('🔴 [IOC] Error al ejecutar IOC sell:', error);
@@ -381,7 +470,19 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       if (result.success) {
         this.modeStats[CarouselMode.AGGRESSIVE_IOC].fills++;
         this.modeStats[CarouselMode.AGGRESSIVE_IOC].feesSpentDrops += EST_FEE_DROPS_PER_TX;
+        this.sessionFeesDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('IOC_COMPRA', result.hash || '', 'tesSUCCESS', { price: targetPrice, amount: xrpAmount });
+        // Registrar en P&L tracker
+        this.pnlTracker.recordFill({
+          side: 'BUY',
+          price: targetPrice,
+          amount: xrpAmount,
+          usdAmount: parseFloat(usdValue),
+          feeDrops: EST_FEE_DROPS_PER_TX,
+          hash: result.hash || '',
+          timestamp: new Date().toISOString(),
+          mode: CarouselMode.AGGRESSIVE_IOC,
+        });
       }
     } catch (error) {
       this.log.error('🔴 [IOC] Error al ejecutar IOC buy:', error);
@@ -830,6 +931,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       try {
         const result = await this.orderManager.cancelOrder(this.wallet, this.activeBuy.sequence);
         this.modeStats[this.carouselMode].feesSpentDrops += EST_FEE_DROPS_PER_TX;
+        this.sessionFeesDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('CANCELAR_COMPRA', result.hash || '', result.success ? 'tesSUCCESS' : (result.error || 'ERROR'), {
           sequence: this.activeBuy.sequence
         });
@@ -844,6 +946,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       try {
         const result = await this.orderManager.cancelOrder(this.wallet, this.activeSell.sequence);
         this.modeStats[this.carouselMode].feesSpentDrops += EST_FEE_DROPS_PER_TX;
+        this.sessionFeesDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('CANCELAR_VENTA', result.hash || '', result.success ? 'tesSUCCESS' : (result.error || 'ERROR'), {
           sequence: this.activeSell.sequence
         });
@@ -877,6 +980,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
           hash: result.hash || undefined,
         };
         this.modeStats[this.carouselMode].feesSpentDrops += EST_FEE_DROPS_PER_TX;
+        this.sessionFeesDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('COMPRA_LIMITE', result.hash || '', 'tesSUCCESS', { price: priceUsd, amount: xrpAmount, mode: this.carouselMode });
       } else {
         db.logTransaction('COMPRA_LIMITE', '', result.error || 'ERROR_DESCONOCIDO', { price: priceUsd, amount: xrpAmount });
@@ -909,6 +1013,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
           hash: result.hash || undefined,
         };
         this.modeStats[this.carouselMode].feesSpentDrops += EST_FEE_DROPS_PER_TX;
+        this.sessionFeesDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('VENTA_LIMITE', result.hash || '', 'tesSUCCESS', { price: priceUsd, amount: xrpAmount, mode: this.carouselMode });
       } else {
         db.logTransaction('VENTA_LIMITE', '', result.error || 'ERROR_DESCONOCIDO', { price: priceUsd, amount: xrpAmount });

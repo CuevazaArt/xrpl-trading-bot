@@ -116,6 +116,10 @@ export const config = {
   oracleMaxAgeSeconds: parseInt(process.env.ORACLE_MAX_AGE_SECONDS || '60', 10),
   maxFeeDrops: parseInt(process.env.MAX_FEE_DROPS || '50000', 10),
   minXrpReserveBuffer: parseFloat(process.env.MIN_XRP_RESERVE_BUFFER || '10.0'),
+
+  // Production Safety — Stop Loss & Circuit Breaker
+  mmMaxSessionFeeDrops: parseInt(process.env.MM_MAX_SESSION_FEE_DROPS || '5000', 10),
+  mmMaxLossUsd: parseFloat(process.env.MM_MAX_LOSS_USD || '5.0'),
 };
 
 // Configurar nivel de log global
