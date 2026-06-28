@@ -4,3 +4,6 @@ data/
 .env
 .DS_Store
 *.log
+
+# Seed vault (encrypted wallet seed)
+data/seed.vault

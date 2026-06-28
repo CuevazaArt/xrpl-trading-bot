@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "fund:usd": "tsx src/fundUsd.ts",
     "arbitrage": "tsx src/arbitrage.ts",
-    "cleanup": "tsx src/cleanup.ts"
+    "cleanup": "tsx src/cleanup.ts",
+    "vault:encrypt": "tsx src/seedVault.ts encrypt"
   },
   "keywords": [
     "xrpl",

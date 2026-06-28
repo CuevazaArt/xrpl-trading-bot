@@ -4,12 +4,14 @@ import { XRPLDashboard } from '../dashboard.js';
 import { db } from '../db.js';
 import { config } from '../config.js';
 import { AbstractStrategy } from './AbstractStrategy.js';
+import { PnLTracker, VerifiedFill } from '../pnlTracker.js';
 
 
 interface ActiveOrder {
   sequence: number;
   price: number;
   ledgerPlaced: number;
+  hash?: string;  // TX hash para verificación post-fill
 }
 
 // =====================================================================
@@ -92,6 +94,9 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     [CarouselMode.REST_OBSERVE]: { fills: 0, feesSpentDrops: 0, ticksActive: 0, rotations: 0, iocAttempts: 0, iocHits: 0 },
   };
   private totalRotations: number = 0;
+
+  // === P&L Tracker ===
+  private pnlTracker = new PnLTracker();
 
   protected async onInit(): Promise<void> {
     this.dashboard.updateState({
@@ -242,7 +247,9 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     stats.iocAttempts++;
 
     try {
-      // Leer el orderbook DEX real (XRP → USD: ¿a cuánto podemos vender XRP?)
+      // ── SELL SIDE: ¿A cuánto podemos VENDER XRP? ──
+      // book_offers: muestra ofertas de gente que QUIERE COMPRAR XRP (pagan USD)
+      // taker_gets = lo que nosotros daríamos (XRP), taker_pays = lo que recibiríamos (USD)
       const sellBook = await this.client.request({
         command: 'book_offers',
         taker_pays: { currency: 'USD', issuer: this.usdIssuer },
@@ -250,7 +257,9 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
         limit: 10,
       });
 
-      // Leer el orderbook DEX inverso (USD → XRP: ¿a cuánto podemos comprar XRP?)
+      // ── BUY SIDE: ¿A cuánto podemos COMPRAR XRP? ──
+      // book_offers: muestra ofertas de gente que QUIERE VENDER XRP (piden USD)
+      // taker_gets = lo que nosotros daríamos (USD), taker_pays = lo que recibiríamos (XRP)
       const buyBook = await this.client.request({
         command: 'book_offers',
         taker_pays: { currency: 'XRP' },
@@ -264,10 +273,11 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       // Factor de captura adaptativo: se ajusta según el hit rate del IOC
       const edgeCapture = this.getAdaptiveEdgeCapture();
 
-      // Extraer mejor precio para vender XRP en el DEX
+      let acted = false;
+
+      // ── Evaluar VENTA: DEX paga MÁS que oracle → vender XRP caro ──
       if (sellOffers.length > 0) {
         const bestOffer = sellOffers[0];
-        // TakerPays = USD que recibiríamos, TakerGets = XRP que daríamos
         const usdReceive = typeof bestOffer.TakerPays === 'object'
           ? parseFloat(bestOffer.TakerPays.value)
           : 0;
@@ -282,44 +292,49 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
           this.log.debug(`🔴 [IOC] DEX sell price: ${dexSellPrice.toFixed(4)} | Edge: ${(sellEdge * 100).toFixed(3)}%`);
 
           if (sellEdge > config.mmIocMinDexEdge) {
-            // Precio objetivo: capturar 90% del edge (no ser 100% greedy)
             const targetPrice = midPrice + (dexSellPrice - midPrice) * edgeCapture;
-            this.log.info(`🔴 [IOC] ¡Edge detectado! DEX=${dexSellPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (+${(sellEdge * 100).toFixed(2)}%) → Target 90%: ${targetPrice.toFixed(4)} USD`);
+            this.log.info(`🔴 [IOC] ¡SELL Edge! DEX=${dexSellPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (+${(sellEdge * 100).toFixed(2)}%) → Target ${(edgeCapture*100).toFixed(0)}%: ${targetPrice.toFixed(4)} USD`);
             await this.executeIOCSell(targetPrice);
             stats.iocHits++;
-            return;
+            acted = true;
           }
         }
       }
 
-      // Extraer mejor precio para comprar XRP en el DEX
-      if (buyOffers.length > 0) {
+      // ── Evaluar COMPRA: DEX vende MÁS BARATO que oracle → comprar XRP barato ──
+      if (!acted && buyOffers.length > 0) {
         const bestOffer = buyOffers[0];
-        const xrpReceive = typeof bestOffer.TakerPays === 'string'
-          ? parseInt(bestOffer.TakerPays) / 1_000_000
-          : 0;
-        const usdGive = typeof bestOffer.TakerGets === 'object'
+        // En buyBook: TakerGets = USD que alguien ofrece, TakerPays = XRP que pide
+        // Nosotros seríamos el taker: damos USD, recibimos XRP
+        const usdAsk = typeof bestOffer.TakerGets === 'object'
           ? parseFloat(bestOffer.TakerGets.value)
           : 0;
+        const xrpGet = typeof bestOffer.TakerPays === 'string'
+          ? parseInt(bestOffer.TakerPays) / 1_000_000
+          : 0;
 
-        if (xrpReceive > 0) {
-          const dexBuyPrice = usdGive / xrpReceive;
+        if (xrpGet > 0 && usdAsk > 0) {
+          // Precio al que alguien vende XRP en el DEX
+          const dexBuyPrice = usdAsk / xrpGet;
+          // Edge positivo = DEX es más barato que oracle (oportunidad de compra)
           const buyEdge = (midPrice - dexBuyPrice) / midPrice;
 
           this.log.debug(`🔴 [IOC] DEX buy price: ${dexBuyPrice.toFixed(4)} | Edge: ${(buyEdge * 100).toFixed(3)}%`);
 
           if (buyEdge > config.mmIocMinDexEdge) {
-            // Precio objetivo: capturar 90% del edge (comprar un poco más caro que el DEX)
+            // Comprar un poco más caro que el DEX (capturar X% del descuento)
             const targetPrice = midPrice - (midPrice - dexBuyPrice) * edgeCapture;
-            this.log.info(`🔴 [IOC] ¡Edge detectado! DEX=${dexBuyPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (-${(buyEdge * 100).toFixed(2)}%) → Target 90%: ${targetPrice.toFixed(4)} USD`);
+            this.log.info(`🔴 [IOC] ¡BUY Edge! DEX=${dexBuyPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (-${(buyEdge * 100).toFixed(2)}%) → Target ${(edgeCapture*100).toFixed(0)}%: ${targetPrice.toFixed(4)} USD`);
             await this.executeIOCBuy(targetPrice);
             stats.iocHits++;
-            return;
+            acted = true;
           }
         }
       }
 
-      this.log.info(`🔴 [IOC] Sin edge suficiente (min: ${(config.mmIocMinDexEdge * 100).toFixed(2)}%). Esperando...`);
+      if (!acted) {
+        this.log.info(`🔴 [IOC] Sin edge suficiente (min: ${(config.mmIocMinDexEdge * 100).toFixed(2)}%). Esperando...`);
+      }
     } catch (error) {
       this.log.error('🔴 [IOC] Error al leer orderbook DEX:', error);
     }
@@ -496,13 +511,28 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
   }
 
   private logCarouselSummary(): void {
-    this.log.info('🎠 ═══ Resumen Carousel (vuelta completa) ═══');
+    const vuelta = Math.floor(this.totalRotations / MODE_ORDER.length);
+    this.log.info(`🎠 ═══ Carousel #${vuelta} ══════════════════════════════`);
+
+    let totalFees = 0;
+    let totalFills = 0;
     for (const mode of MODE_ORDER) {
       const s = this.modeStats[mode];
-      const extra = mode === CarouselMode.AGGRESSIVE_IOC
-        ? ` | IOC: ${s.iocHits}/${s.iocAttempts} hits`
+      totalFees += s.feesSpentDrops;
+      totalFills += s.fills;
+      const label = MODE_LABELS[mode].padEnd(20);
+      const iocExtra = mode === CarouselMode.AGGRESSIVE_IOC
+        ? ` | hit: ${s.iocHits}/${s.iocAttempts} (${s.iocAttempts > 0 ? ((s.iocHits/s.iocAttempts)*100).toFixed(0) : 0}%)`
         : '';
-      this.log.info(`  ${MODE_LABELS[mode]}: fills=${s.fills}, fees=${s.feesSpentDrops}drops, ticks=${s.ticksActive}, rots=${s.rotations}${extra}`);
+      this.log.info(`  ${label} fills: ${String(s.fills).padStart(3)} | fees: ${String(s.feesSpentDrops).padStart(5)} drops | ticks: ${String(s.ticksActive).padStart(4)}${iocExtra}`);
+    }
+    this.log.info(`  ${'─'.repeat(55)}`);
+    this.log.info(`  TOTALES              fills: ${String(totalFills).padStart(3)} | fees: ${String(totalFees).padStart(5)} drops ($${(totalFees / 1_000_000 * (this.lastPrice || 1)).toFixed(4)} USD)`);
+
+    // P&L Report
+    const pnlLines = this.pnlTracker.formatSummaryLog();
+    for (const line of pnlLines) {
+      this.log.info(line);
     }
     this.log.info('🎠 ═══════════════════════════════════════════');
   }
@@ -526,28 +556,157 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       );
 
       if (this.activeBuy && !activeSequences.has(this.activeBuy.sequence)) {
-        this.log.info(`¡Orden de COMPRA (Seq: ${this.activeBuy.sequence}) fue ejecutada (FILLED)!`);
-        this.modeStats[this.carouselMode].fills++;
-        db.logTransaction('COMPRA_FILLED', '', 'FILLED', {
-          sequence: this.activeBuy.sequence,
-          price: this.activeBuy.price,
-          mode: this.carouselMode,
-        });
+        const verified = await this.verifyFillViaTx(this.activeBuy, 'BUY');
+        if (verified) {
+          this.log.info(`✅ [FILL VERIFICADO] COMPRA: ${verified.amount.toFixed(2)} XRP a $${verified.price.toFixed(4)} (fee: ${verified.feeDrops} drops)`);
+          this.modeStats[this.carouselMode].fills++;
+          this.pnlTracker.recordFill(verified);
+          db.logTransaction('COMPRA_FILLED', verified.hash, 'FILLED', {
+            sequence: this.activeBuy.sequence,
+            executedPrice: verified.price,
+            executedAmount: verified.amount,
+            feeDrops: verified.feeDrops,
+            mode: this.carouselMode,
+          });
+        } else {
+          this.log.warn(`⚠️ Orden de COMPRA (Seq: ${this.activeBuy.sequence}) desapareció pero NO se verificó fill. Posible cancelación/expiración.`);
+        }
         this.activeBuy = null;
       }
 
       if (this.activeSell && !activeSequences.has(this.activeSell.sequence)) {
-        this.log.info(`¡Orden de VENTA (Seq: ${this.activeSell.sequence}) fue ejecutada (FILLED)!`);
-        this.modeStats[this.carouselMode].fills++;
-        db.logTransaction('VENTA_FILLED', '', 'FILLED', {
-          sequence: this.activeSell.sequence,
-          price: this.activeSell.price,
-          mode: this.carouselMode,
-        });
+        const verified = await this.verifyFillViaTx(this.activeSell, 'SELL');
+        if (verified) {
+          this.log.info(`✅ [FILL VERIFICADO] VENTA: ${verified.amount.toFixed(2)} XRP a $${verified.price.toFixed(4)} (fee: ${verified.feeDrops} drops)`);
+          this.modeStats[this.carouselMode].fills++;
+          this.pnlTracker.recordFill(verified);
+          db.logTransaction('VENTA_FILLED', verified.hash, 'FILLED', {
+            sequence: this.activeSell.sequence,
+            executedPrice: verified.price,
+            executedAmount: verified.amount,
+            feeDrops: verified.feeDrops,
+            mode: this.carouselMode,
+          });
+        } else {
+          this.log.warn(`⚠️ Orden de VENTA (Seq: ${this.activeSell.sequence}) desapareció pero NO se verificó fill. Posible cancelación/expiración.`);
+        }
         this.activeSell = null;
       }
     } catch (error) {
       this.log.error('Error al verificar fills (account_offers):', error);
+    }
+  }
+
+  /**
+   * Verifica un fill consultando la TX real en el ledger.
+   * Retorna datos del fill verificado o null si no hubo intercambio.
+   */
+  private async verifyFillViaTx(order: ActiveOrder, side: 'BUY' | 'SELL'): Promise<VerifiedFill | null> {
+    if (!order.hash) {
+      // Sin hash, no podemos verificar → asumir fill con precio de la orden (legacy)
+      return {
+        side,
+        price: order.price,
+        amount: parseFloat(this.orderAmountXRP),
+        usdAmount: order.price * parseFloat(this.orderAmountXRP),
+        feeDrops: EST_FEE_DROPS_PER_TX,
+        hash: '',
+        timestamp: new Date().toISOString(),
+        mode: this.carouselMode,
+      };
+    }
+
+    try {
+      const txResponse = await this.client.request({
+        command: 'tx',
+        transaction: order.hash,
+      });
+
+      const tx = txResponse.result as any;
+      if (!tx || !tx.meta || typeof tx.meta === 'string') {
+        return null;
+      }
+
+      const meta = tx.meta;
+
+      // Si TransactionResult no es tesSUCCESS, no hubo fill
+      if (meta.TransactionResult !== 'tesSUCCESS') {
+        return null;
+      }
+
+      // Extraer balance changes del meta
+      const feeDrops = parseInt(tx.Fee || '12', 10);
+
+      // Buscar cambios de balance en AffectedNodes
+      let xrpChange = 0;
+      let usdChange = 0;
+
+      for (const node of meta.AffectedNodes || []) {
+        const modified = node.ModifiedNode || node.DeletedNode;
+        if (!modified) continue;
+
+        // Cambios en AccountRoot (XRP balance)
+        if (modified.LedgerEntryType === 'AccountRoot') {
+          const finalFields = modified.FinalFields;
+          const prevFields = modified.PreviousFields;
+          if (finalFields?.Account === this.wallet.address && prevFields?.Balance) {
+            const prev = parseInt(prevFields.Balance, 10);
+            const final = parseInt(finalFields.Balance, 10);
+            xrpChange = (final - prev) / 1_000_000;
+          }
+        }
+
+        // Cambios en RippleState (USD/IOU balance)
+        if (modified.LedgerEntryType === 'RippleState') {
+          const finalFields = modified.FinalFields;
+          const prevFields = modified.PreviousFields;
+          if (finalFields?.Balance && prevFields?.Balance) {
+            const prevBal = parseFloat(prevFields.Balance.value || '0');
+            const finalBal = parseFloat(finalFields.Balance.value || '0');
+            const change = finalBal - prevBal;
+            if (Math.abs(change) > 0.0001) {
+              usdChange = change;
+            }
+          }
+        }
+      }
+
+      // Determinar si hubo un intercambio real
+      const absXrp = Math.abs(xrpChange) - (feeDrops / 1_000_000); // Restar fee del cambio XRP
+      const absUsd = Math.abs(usdChange);
+
+      if (absXrp < 0.001 && absUsd < 0.001) {
+        // No hubo intercambio significativo
+        return null;
+      }
+
+      // Calcular precio de ejecución real
+      const executedAmount = absXrp > 0.001 ? absXrp : parseFloat(this.orderAmountXRP);
+      const executedUsd = absUsd > 0.001 ? absUsd : order.price * executedAmount;
+      const executedPrice = executedAmount > 0 ? executedUsd / executedAmount : order.price;
+
+      return {
+        side,
+        price: executedPrice,
+        amount: executedAmount,
+        usdAmount: executedUsd,
+        feeDrops,
+        hash: order.hash,
+        timestamp: new Date().toISOString(),
+        mode: this.carouselMode,
+      };
+    } catch (error) {
+      this.log.warn(`No se pudo verificar TX ${order.hash}, asumiendo fill al precio de la orden.`);
+      return {
+        side,
+        price: order.price,
+        amount: parseFloat(this.orderAmountXRP),
+        usdAmount: order.price * parseFloat(this.orderAmountXRP),
+        feeDrops: EST_FEE_DROPS_PER_TX,
+        hash: order.hash,
+        timestamp: new Date().toISOString(),
+        mode: this.carouselMode,
+      };
     }
   }
 
@@ -715,6 +874,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
           sequence: result.sequence,
           price: priceUsd,
           ledgerPlaced: this.currentLedger,
+          hash: result.hash || undefined,
         };
         this.modeStats[this.carouselMode].feesSpentDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('COMPRA_LIMITE', result.hash || '', 'tesSUCCESS', { price: priceUsd, amount: xrpAmount, mode: this.carouselMode });
@@ -746,6 +906,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
           sequence: result.sequence,
           price: priceUsd,
           ledgerPlaced: this.currentLedger,
+          hash: result.hash || undefined,
         };
         this.modeStats[this.carouselMode].feesSpentDrops += EST_FEE_DROPS_PER_TX;
         db.logTransaction('VENTA_LIMITE', result.hash || '', 'tesSUCCESS', { price: priceUsd, amount: xrpAmount, mode: this.carouselMode });

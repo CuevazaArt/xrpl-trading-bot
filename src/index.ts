@@ -14,6 +14,7 @@ import { HealthMonitor } from './healthMonitor.js';
 import { TelegramNotifier } from './telegramNotifier.js';
 import { CLIDashboard } from './cliDashboard.js';
 import { MultiOracle } from './multiOracle.js';
+import { getSeedFromVault, vaultExists } from './seedVault.js';
 
 const log = createLogger('Main');
 
@@ -98,9 +99,25 @@ async function main() {
   const client = new Client(config.xrplWsUrl);
   await connectWithRetry(client);
 
-  // 4. Inicializar Wallet Manager
+  // 4. Inicializar Wallet Manager — intentar vault primero, fallback a .env
   const walletManager = new XRPLWalletManager(client);
-  await walletManager.initializeWallet(config.walletSeed);
+  let walletSeed = config.walletSeed;
+
+  if (vaultExists()) {
+    const vaultSeed = await getSeedFromVault();
+    if (vaultSeed) {
+      walletSeed = vaultSeed;
+      log.info('🔐 Seed cargado desde vault cifrado.');
+    } else {
+      log.error('No se pudo descifrar el vault. Abortando.');
+      process.exit(1);
+    }
+  } else if (!walletSeed) {
+    log.error('No hay seed configurado (ni vault ni .env). Abortando.');
+    process.exit(1);
+  }
+
+  await walletManager.initializeWallet(walletSeed);
   const wallet = walletManager.getWallet();
 
   if (!wallet) {
