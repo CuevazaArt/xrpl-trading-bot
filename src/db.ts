@@ -148,6 +148,37 @@ export class JSONDatabase {
   }
 
   /**
+   * Registra una anomalía operativa depurada en la DB local.
+   */
+  logAnomaly(type: string, message: string, details: any = {}) {
+    if (!this.data.custom) {
+      this.data.custom = {};
+    }
+    if (!Array.isArray(this.data.custom.anomalies)) {
+      this.data.custom.anomalies = [];
+    }
+    this.data.custom.anomalies.push({
+      timestamp: new Date().toISOString(),
+      type,
+      message,
+      details
+    });
+    
+    // Limitar historial a 100 registros para evitar sobrecarga
+    if (this.data.custom.anomalies.length > 100) {
+      this.data.custom.anomalies.shift();
+    }
+    this.enqueueWrite();
+  }
+
+  /**
+   * Obtiene la lista de anomalías registradas.
+   */
+  getAnomalies(): any[] {
+    return this.data.custom && Array.isArray(this.data.custom.anomalies) ? this.data.custom.anomalies : [];
+  }
+
+  /**
    * Fuerza la recarga de datos desde el disco, validando su estructura.
    * Si el archivo no existe o está corrupto, lo inicializa y lo guarda.
    */

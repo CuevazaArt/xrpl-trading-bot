@@ -17,6 +17,7 @@ import { MultiOracle } from './multiOracle.js';
 import { getSeedFromVault, vaultExists } from './seedVault.js';
 import { runConfigValidation } from './configValidator.js';
 import { SelfHealingWatchdog } from './selfHealingWatchdog.js';
+import { LogMonitor } from './logMonitor.js';
 
 const log = createLogger('Main');
 
@@ -83,6 +84,10 @@ async function main() {
     log.info('═══ Fin de Dry Run ═══');
     process.exit(0);
   }
+
+  // ─── INICIAR VIGILANTE DE LOGS PERPETUO ───
+  const logMonitor = new LogMonitor(db);
+  logMonitor.start();
 
   // 1. Dashboard Web (condicional)
   let dashboard: XRPLDashboard | null = null;
