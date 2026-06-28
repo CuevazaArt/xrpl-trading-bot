@@ -510,6 +510,29 @@ Para evitar la parálisis por inventario (*Leg-Lock*) ante una serie de compras 
 
 ---
 
+## 🛡️ Robustez y Manejo de Errores Críticos (Activos, Nocionales y Precisión)
+
+Para evitar caídas del bot ante cambios de condiciones en el mercado, se han integrado mecanismos automáticos que gestionan los errores más comunes de trading:
+
+### 1. Activos No Existentes, No Activados o Sin Trustline
+*   **Por qué es importante**: Intentar consultar balances o colocar ofertas de tokens que no están configurados en la wallet (o de cuentas vacías en el ledger) provoca que las librerías RPC de bajo nivel colapsen.
+*   **Cómo se soluciona**: 
+    *   `configValidator.ts` valida formatos de direcciones en el arranque.
+    *   Si una wallet de XRPL no tiene activa la Trustline de USD Bitstamp, los adaptadores de carteras (`eoaWalletAdapter.ts`) capturan la excepción silenciosamente, reportan saldo `0 USD` y continúan la ejecución sin colapsar.
+*   **Cómo se vigila**: Si el `LogMonitor` detecta un problema con las Trustlines, guardará una alerta `[WRN]` en la sección de anomalías de la base de datos local para que la corrijas.
+
+### 2. Errores de Nocional Mínimo (Min Notional)
+*   **Por qué es importante**: Los exchanges centralizados (CEXs) rechazan órdenes cuyo valor monetario sea inferior a un umbral mínimo (normalmente $10 USD). Si esto ocurre, una excepción no controlada detendría la estrategia.
+*   **Cómo se soluciona**: Los adaptadores de CEX capturan la excepción de volumen de la API, formatean el resultado como un rechazo controlado (`{ success: false, error: 'MIN_NOTIONAL' }`), y la estrategia de arbitraje libera el espacio para procesar la siguiente oportunidad en el siguiente ciclo.
+
+### 3. Precisión de Precios y Fraccionamiento de Tokens (Muchos Decimales)
+*   **Por qué es importante**: El XRP Ledger y los CEXs tienen reglas rígidas de formato. Enviar un precio con 15 decimales debido a operaciones matemáticas de punto flotante en Javascript causa el rechazo de la transacción por parte del nodo validador del ledger o del exchange.
+*   **Cómo se soluciona**:
+    *   **En CEXs**: El bot utiliza saneamiento de redondeo (`formatQty` y `formatPrice`) limitando las órdenes al paso del lote y tick permitidos (ej. 1 decimal para XRP en Binance).
+    *   **En DEX (XRPL)**: Helena no trabaja con números fraccionados para operaciones on-chain; convierte de inmediato todos los montos de XRP a **drops** (enteros) a través de `Math.round(volumeXrp * 1_000_000).toString()`, eliminando los decimales flotantes antes de firmar y emitir las transacciones.
+
+---
+
 ## 📖 Glosario
 
 | Término | Definición |
