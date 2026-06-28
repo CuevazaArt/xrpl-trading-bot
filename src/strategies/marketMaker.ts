@@ -341,30 +341,41 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       const sellOffers = sellBook.result.offers || [];
       const buyOffers = buyBook.result.offers || [];
 
+      // Depth check: rechazar books con < 3 ofertas (señal de precio poco confiable)
+      const MIN_BOOK_DEPTH = 3;
+      if (sellOffers.length < MIN_BOOK_DEPTH && buyOffers.length < MIN_BOOK_DEPTH) {
+        this.log.info(`🔴 [IOC] Orderbook demasiado thin (sell: ${sellOffers.length}, buy: ${buyOffers.length} < ${MIN_BOOK_DEPTH}). Saltando.`);
+        return;
+      }
+
       // Factor de captura adaptativo: se ajusta según el hit rate del IOC
       const edgeCapture = this.getAdaptiveEdgeCapture();
 
       let acted = false;
 
       // ── Evaluar VENTA: DEX paga MÁS que oracle → vender XRP caro ──
-      if (sellOffers.length > 0) {
-        const bestOffer = sellOffers[0];
-        const usdReceive = typeof bestOffer.TakerPays === 'object'
-          ? parseFloat(bestOffer.TakerPays.value)
-          : 0;
-        const xrpGive = typeof bestOffer.TakerGets === 'string'
-          ? parseInt(bestOffer.TakerGets) / 1_000_000
-          : 0;
+      // Usar VWAP de top ofertas (no solo la primera, que puede ser stale/tiny)
+      if (sellOffers.length >= MIN_BOOK_DEPTH) {
+        let totalUsd = 0;
+        let totalXrp = 0;
+        const topN = Math.min(3, sellOffers.length);
+        for (let i = 0; i < topN; i++) {
+          const offer = sellOffers[i];
+          const usd = typeof offer.TakerPays === 'object' ? parseFloat(offer.TakerPays.value) : 0;
+          const xrp = typeof offer.TakerGets === 'string' ? parseInt(offer.TakerGets) / 1_000_000 : 0;
+          totalUsd += usd;
+          totalXrp += xrp;
+        }
 
-        if (xrpGive > 0) {
-          const dexSellPrice = usdReceive / xrpGive;
+        if (totalXrp > 0) {
+          const dexSellPrice = totalUsd / totalXrp; // VWAP del top del book
           const sellEdge = (dexSellPrice - midPrice) / midPrice;
 
-          this.log.debug(`🔴 [IOC] DEX sell price: ${dexSellPrice.toFixed(4)} | Edge: ${(sellEdge * 100).toFixed(3)}%`);
+          this.log.debug(`🔴 [IOC] DEX sell VWAP (${topN} offers): ${dexSellPrice.toFixed(4)} | Edge: ${(sellEdge * 100).toFixed(3)}%`);
 
           if (sellEdge > config.mmIocMinDexEdge) {
             const targetPrice = midPrice + (dexSellPrice - midPrice) * edgeCapture;
-            this.log.info(`🔴 [IOC] ¡SELL Edge! DEX=${dexSellPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (+${(sellEdge * 100).toFixed(2)}%) → Target ${(edgeCapture*100).toFixed(0)}%: ${targetPrice.toFixed(4)} USD`);
+            this.log.info(`🔴 [IOC] ¡SELL Edge! VWAP=${dexSellPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (+${(sellEdge * 100).toFixed(2)}%) → Target ${(edgeCapture*100).toFixed(0)}%: ${targetPrice.toFixed(4)} USD`);
             await this.executeIOCSell(targetPrice);
             stats.iocHits++;
             acted = true;
@@ -373,29 +384,28 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
       }
 
       // ── Evaluar COMPRA: DEX vende MÁS BARATO que oracle → comprar XRP barato ──
-      if (!acted && buyOffers.length > 0) {
-        const bestOffer = buyOffers[0];
-        // En buyBook: TakerGets = USD que alguien ofrece, TakerPays = XRP que pide
-        // Nosotros seríamos el taker: damos USD, recibimos XRP
-        const usdAsk = typeof bestOffer.TakerGets === 'object'
-          ? parseFloat(bestOffer.TakerGets.value)
-          : 0;
-        const xrpGet = typeof bestOffer.TakerPays === 'string'
-          ? parseInt(bestOffer.TakerPays) / 1_000_000
-          : 0;
+      // VWAP de top ofertas de venta en el DEX
+      if (!acted && buyOffers.length >= MIN_BOOK_DEPTH) {
+        let totalUsd = 0;
+        let totalXrp = 0;
+        const topN = Math.min(3, buyOffers.length);
+        for (let i = 0; i < topN; i++) {
+          const offer = buyOffers[i];
+          const usd = typeof offer.TakerGets === 'object' ? parseFloat(offer.TakerGets.value) : 0;
+          const xrp = typeof offer.TakerPays === 'string' ? parseInt(offer.TakerPays) / 1_000_000 : 0;
+          totalUsd += usd;
+          totalXrp += xrp;
+        }
 
-        if (xrpGet > 0 && usdAsk > 0) {
-          // Precio al que alguien vende XRP en el DEX
-          const dexBuyPrice = usdAsk / xrpGet;
-          // Edge positivo = DEX es más barato que oracle (oportunidad de compra)
+        if (totalXrp > 0 && totalUsd > 0) {
+          const dexBuyPrice = totalUsd / totalXrp; // VWAP
           const buyEdge = (midPrice - dexBuyPrice) / midPrice;
 
-          this.log.debug(`🔴 [IOC] DEX buy price: ${dexBuyPrice.toFixed(4)} | Edge: ${(buyEdge * 100).toFixed(3)}%`);
+          this.log.debug(`🔴 [IOC] DEX buy VWAP (${topN} offers): ${dexBuyPrice.toFixed(4)} | Edge: ${(buyEdge * 100).toFixed(3)}%`);
 
           if (buyEdge > config.mmIocMinDexEdge) {
-            // Comprar un poco más caro que el DEX (capturar X% del descuento)
             const targetPrice = midPrice - (midPrice - dexBuyPrice) * edgeCapture;
-            this.log.info(`🔴 [IOC] ¡BUY Edge! DEX=${dexBuyPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (-${(buyEdge * 100).toFixed(2)}%) → Target ${(edgeCapture*100).toFixed(0)}%: ${targetPrice.toFixed(4)} USD`);
+            this.log.info(`🔴 [IOC] ¡BUY Edge! VWAP=${dexBuyPrice.toFixed(4)} Oracle=${midPrice.toFixed(4)} (-${(buyEdge * 100).toFixed(2)}%) → Target ${(edgeCapture*100).toFixed(0)}%: ${targetPrice.toFixed(4)} USD`);
             await this.executeIOCBuy(targetPrice);
             stats.iocHits++;
             acted = true;

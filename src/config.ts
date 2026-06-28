@@ -88,8 +88,8 @@ export const config = {
   mmCarouselRestMaxLedgers: parseInt(process.env.MM_CAROUSEL_REST_MAX_LEDGERS || '20', 10),
   // Tight Passive spread override
   mmTightSpread: parseFloat(process.env.MM_TIGHT_SPREAD || '0.003'),
-  // IOC: ventaja mínima DEX vs Oracle para cruzar
-  mmIocMinDexEdge: parseFloat(process.env.MM_IOC_MIN_DEX_EDGE || '0.002'),
+  // IOC: ventaja mínima DEX vs Oracle para cruzar (0.5% = evita falsos edges en testnet)
+  mmIocMinDexEdge: parseFloat(process.env.MM_IOC_MIN_DEX_EDGE || '0.005'),
 
   // Telegram Notifier
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
@@ -118,7 +118,7 @@ export const config = {
   minXrpReserveBuffer: parseFloat(process.env.MIN_XRP_RESERVE_BUFFER || '10.0'),
 
   // Production Safety — Stop Loss & Circuit Breaker
-  mmMaxSessionFeeDrops: parseInt(process.env.MM_MAX_SESSION_FEE_DROPS || '5000', 10),
+  mmMaxSessionFeeDrops: parseInt(process.env.MM_MAX_SESSION_FEE_DROPS || '50000', 10),
   mmMaxLossUsd: parseFloat(process.env.MM_MAX_LOSS_USD || '5.0'),
 };
 
