@@ -31,9 +31,10 @@ async function connectWithRetry(client: Client, maxRetries = 10): Promise<void> 
 
   while (attempt < maxRetries) {
     try {
-      log.info(`Conectando al nodo XRPL en: ${config.xrplWsUrl}... (intento ${attempt + 1})`);
+      const activeUrl = (client as any).connection?.ws?.url || config.xrplWsUrl;
+      log.info(`Conectando al nodo XRPL en: ${activeUrl}... (intento ${attempt + 1})`);
       await client.connect();
-      log.info('Conexión establecida.');
+      log.info(`Conexión establecida con el nodo: ${(client as any).connection?.ws?.url || activeUrl}`);
       return;
     } catch (error) {
       attempt++;
@@ -100,8 +101,9 @@ async function main() {
     cliDash = new CLIDashboard();
   }
 
-  // 3. Inicializar cliente XRPL
-  const client = new Client(config.xrplWsUrl);
+  // 3. Inicializar cliente XRPL (con soporte para múltiples endpoints y reconexión automática)
+  const urls = config.xrplWsUrl.split(',').map(u => u.trim());
+  const client = new Client((urls.length > 1 ? urls : urls[0]) as any);
   await connectWithRetry(client);
 
   // 4. Inicializar Wallet Manager — intentar vault primero, fallback a .env

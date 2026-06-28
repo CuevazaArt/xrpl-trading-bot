@@ -566,6 +566,15 @@ export class XRPLArbitrageStrategy extends AbstractStrategy {
       }
 
       this.log.debug(`Inventory sync: DEX=${this.state.metrics.dexInventoryXrp.toFixed(0)} XRP + ${this.state.metrics.dexInventoryUsd.toFixed(2)} USD | CEX=${this.state.metrics.cexInventoryXrp.toFixed(0)} XRP + ${this.state.metrics.cexInventoryUsd.toFixed(2)} USDT`);
+
+      // Alerta de desbalance (Leg-Lock Warning)
+      const minXrpThreshold = config.arbMinTradeXrp * 2;
+      const dexUnbalanced = this.state.metrics.dexInventoryXrp < minXrpThreshold || this.state.metrics.dexInventoryUsd < 50;
+      const cexUnbalanced = this.cex.isConfigured() && (this.state.metrics.cexInventoryXrp < minXrpThreshold || this.state.metrics.cexInventoryUsd < 50);
+
+      if (dexUnbalanced || cexUnbalanced) {
+        this.log.warn(`⚠️ ALERTA DESBALANCE (Leg-Lock): Inventario bajo. DEX (XRP: ${this.state.metrics.dexInventoryXrp.toFixed(0)}, USD: ${this.state.metrics.dexInventoryUsd.toFixed(0)}) | CEX (XRP: ${this.state.metrics.cexInventoryXrp.toFixed(0)}, USD: ${this.state.metrics.cexInventoryUsd.toFixed(0)}). Rebalancear manualmente.`);
+      }
     } catch (error) {
       this.log.error('Error syncing inventories:', error);
     }
