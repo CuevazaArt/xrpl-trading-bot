@@ -108,7 +108,10 @@ export class XRPLStrategyManager {
       this.currentLedger = ledger.ledger_index;
       this.tickCount++;
       this.tickInProgress = true;
-      log.info(`--- Tick #${this.tickCount} en Ledger #${this.currentLedger} [Bot: ${this.strategy.name}] ---`);
+      // Only log tick header every 30 ticks (~90s) to reduce noise
+      if (this.tickCount % 30 === 0) {
+        log.info(`Tick #${this.tickCount} | Ledger #${this.currentLedger}`);
+      }
       try {
         // Timeout guard: evitar que un RPC colgado congele el bot indefinidamente
         await Promise.race([

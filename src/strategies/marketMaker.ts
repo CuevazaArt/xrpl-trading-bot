@@ -5,6 +5,8 @@ import { db } from '../db.js';
 import { config } from '../config.js';
 import { AbstractStrategy } from './AbstractStrategy.js';
 import { PnLTracker, VerifiedFill } from '../pnlTracker.js';
+import { printBanner, printStatusCard, logFill, logRoundtrip, logModeChange, logIOCResult, logAlert, logSuccess, StatusCardData } from '../logger.js';
+import { SessionLogger } from '../sessionLogger.js';
 
 
 interface ActiveOrder {
@@ -110,14 +112,19 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
   private readonly MAX_LOSS_USD = config.mmMaxLossUsd;
   private readonly MIN_XRP_OPERATIONAL = config.minXrpReserveBuffer + 10; // Reserva + buffer
 
+  // === Session Logger (persistent per-run analytics) ===
+  private sessionLogger = new SessionLogger();
+  private tickCount = 0;
+
   protected async onInit(): Promise<void> {
+    printBanner();
     this.dashboard.updateState({
       walletAddress: this.wallet.address,
       strategyName: 'Market Maker (Carousel MM)'
     });
     // Pre-cargar fee de la red al inicio
     await this.refreshNetworkFee();
-    this.log.info(`🎠 Carousel MM iniciado. Modo: ${MODE_LABELS[this.carouselMode]}`);
+    this.log.info(`Carousel MM iniciado. Modo: ${MODE_LABELS[this.carouselMode]}`);
   }
 
   // =====================================================================
@@ -126,6 +133,7 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
 
   async tick(currentLedger: number, marketPrice: number): Promise<void> {
     this.currentLedger = currentLedger;
+    this.tickCount++;
 
     // Inicializar ledger de inicio del modo si es el primer tick
     if (this.modeStartLedger === 0) {
@@ -134,9 +142,8 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
 
     // ── CIRCUIT BREAKER: verificar si Helena debe pausarse ──
     if (this.isPaused) {
-      // Log reducido cada 30 ledgers (~90s) para no spamear
       if (currentLedger % 30 === 0) {
-        this.log.warn(`🛑 [PAUSED] ${this.pauseReason}. Cancelando órdenes y esperando...`);
+        logAlert(`PAUSED: ${this.pauseReason}`);
       }
       await this.cancelActiveOrders();
       return;
@@ -176,6 +183,20 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
 
     // 5. Actualizar tracking
     this.lastPrice = marketPrice;
+
+    // 6. Session snapshot (self-throttled to ~60s intervals)
+    const pnl = this.pnlTracker.getSummary();
+    this.sessionLogger.recordSnapshot({
+      tick: this.tickCount,
+      ledger: currentLedger,
+      mode: this.carouselMode,
+      price: marketPrice,
+      xrpBalance: this.cachedXrpBalance,
+      pnlUsd: pnl.totalNetProfitUsd,
+      feesDrops: this.sessionFeesDrops,
+      fills: pnl.totalFills,
+      roundtrips: pnl.completedRoundtrips,
+    });
   }
 
   // =====================================================================
@@ -218,8 +239,14 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     if (!this.isPaused) {
       this.isPaused = true;
       this.pauseReason = reason;
-      this.log.error(`🛑 CIRCUIT BREAKER: ${reason}`);
-      this.log.error('🛑 Helena pausada. Reiniciar manualmente para reactivar.');
+      logAlert(`CIRCUIT BREAKER: ${reason}`);
+      logAlert('Helena pausada. Reiniciar manualmente para reactivar.');
+
+      // Mark session end reason
+      const endReason = reason.includes('Fees') ? 'circuit_breaker' as const
+        : reason.includes('Stop-loss') ? 'stop_loss' as const
+        : 'error' as const;
+      this.sessionLogger.setEndReason(endReason, reason);
     }
   }
 
@@ -227,6 +254,19 @@ export class XRPLMarketMakerStrategy extends AbstractStrategy {
     this.log.info('Limpiando órdenes activas de Market Maker...');
     await this.cancelActiveOrders();
     this.logCarouselSummary();
+
+    // Finalize session record to disk
+    try {
+      await this.sessionLogger.finalize({
+        totalTicks: this.tickCount,
+        modeStats: this.modeStats as any,
+        pnlSummary: this.pnlTracker.getSummary(),
+        totalFeesDrops: this.sessionFeesDrops,
+        totalRotations: this.totalRotations,
+      });
+    } catch (err) {
+      this.log.error('Failed to save session record:', err);
+    }
   }
 
   // =====================================================================
