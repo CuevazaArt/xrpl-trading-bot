@@ -464,6 +464,50 @@ Helena ensancha el spread automáticamente. Si prefieres pausar:
 MAX_FEE_DROPS=5000    # Limitar a 0.005 XRP máximo
 ```
 
+```
+
+---
+
+## 🚀 Transición de Prueba (Testnet) a Real (Mainnet)
+
+Para migrar con seguridad del entorno de pruebas de Testnet a operaciones con capital real en la Mainnet de Ripple, sigue los siguientes pasos:
+
+### 1. Protocolo de Seguridad (Vault Cifrado)
+En Testnet se permite tener la semilla de la wallet en el archivo `.env` en texto plano por comodidad. **En Mainnet, esto es un riesgo crítico.**
+1. Ejecuta en terminal: `npm run vault:encrypt`
+2. Introduce una contraseña maestra robusta. Esto generará un archivo cifrado `data/vault.json`.
+3. Abre tu archivo `.env` y elimina por completo la línea `XRPL_WALLET_SEED`.
+4. Al iniciar el bot (`npm start`), Helena te solicitará la contraseña en consola para cargar la clave en memoria RAM.
+
+### 2. Configuración de Red y Emisor en `.env`
+Modifica las siguientes variables en tu archivo de configuración de producción:
+```env
+# 1. WS de Red Principal (puedes ingresar varios separados por comas para failover)
+XRPL_WS_URL=wss://xrplcluster.com,wss://xrpl.link,wss://s1.ripple.com:45100
+
+# 2. Proveedor de Billeteras activo
+WALLET_PROVIDER=eoa
+
+# 3. Emisor de USD real (Bitstamp en Mainnet)
+USD_ISSUER=rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B
+```
+
+### 3. Fondeo Mínimo Viable para 12 Horas de Operación
+Para asegurar que el bot Helena opere durante la fase inicial de validación de 12 horas de estabilidad sin interrupciones por comisiones o falta de inventario, se requiere cubrir los siguientes balances:
+
+#### A. Activo Nativo (XRP para reservas de cuenta y fees de red)
+*   **Reserva de Cuenta en Ledger**: 10 XRP.
+*   **Reserva por Objetos (Trustline USD + 2 ofertas MM abiertas)**: `2 XRP x 3 = 6 XRP`.
+*   **Tarifas de Transacción (fees)**: 12 drops por transacción estándar. Para 12 horas de actividad continua a máxima velocidad (aprox. 10,800 transacciones): `10800 txs x 0.000012 XRP = ~0.13 XRP` de coste real.
+*   **Buffer de Seguridad Recomendado**: 14 XRP.
+*   **Mínimo Viable XRP Nativo**: **30 XRP** (mantener este balance libre en tu wallet para cubrir reservas y fees sin detenciones).
+
+#### B. Activos de Trading (Inventario XRP / USD para el Market Maker)
+Para evitar la parálisis por inventario (*Leg-Lock*) ante una serie de compras o ventas consecutivas sin emparejamiento inmediato, se requiere un balance mínimo para soportar al menos 10 trades seguidos de tamaño estándar (10 XRP):
+*   **Inventario XRP**: **100 XRP** (aprox. $105 USD).
+*   **Inventario USD / USDT**: **$105 USD** (en la cuenta o exchange).
+*   **Mínimo Viable de Trading**: **100 XRP + $100 USD/USDT** (aprox. $215 USD de capital operativo).
+
 ---
 
 ## 📖 Glosario
