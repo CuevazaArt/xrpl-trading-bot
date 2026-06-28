@@ -24,9 +24,15 @@ export function validateConfig(config: Record<string, any>): ValidationResult {
 
   const isMainnet = isMainnetUrl(config.xrplWsUrl);
 
-  // ─── Wallet Seed ───
-  if (!config.walletSeed && !vaultFileExists()) {
-    errors.push('No hay seed configurado (ni XRPL_WALLET_SEED ni vault cifrado).');
+  // ─── Wallet Provider ───
+  const validProviders = ['eoa', 'mock', 'safe'];
+  if (!validProviders.includes(config.walletProvider)) {
+    errors.push(`WALLET_PROVIDER inválido: "${config.walletProvider}". Valores soportados: ${validProviders.join(', ')}.`);
+  }
+
+  // ─── Wallet Seed (Solo requerido para EOA) ───
+  if (config.walletProvider === 'eoa' && !config.walletSeed && !vaultFileExists()) {
+    errors.push('No hay seed configurado para el proveedor "eoa" (ni XRPL_WALLET_SEED ni vault cifrado).');
   }
 
   // ─── USD Issuer — validar formato de dirección XRPL ───
@@ -56,7 +62,7 @@ export function validateConfig(config: Record<string, any>): ValidationResult {
       warnings.push('MAINNET detectada sin DASHBOARD_TOKEN. El dashboard web estará accesible sin autenticación.');
     }
 
-    if (config.walletSeed && !vaultFileExists()) {
+    if (config.walletProvider === 'eoa' && config.walletSeed && !vaultFileExists()) {
       warnings.push('MAINNET detectada con seed en texto plano en .env. Considera usar `npm run vault:encrypt` para cifrar el seed.');
     }
 
