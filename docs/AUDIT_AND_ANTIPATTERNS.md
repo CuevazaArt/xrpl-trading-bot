@@ -54,3 +54,20 @@ No todos los DEX y CEX pueden combinarse de forma indiscriminada. Existen limita
 *   **Error: `API_RATE_LIMIT_EXCEEDED` (CEX)**:
     *   *Causa*: El bot excedió el número de solicitudes permitidas por minuto en la API del CEX.
     *   *Acción*: Ajustar los tiempos de tick y habilitar la caché de tickers (`AbstractCEXAdapter`) con un TTL mayor.
+
+---
+
+## 4. Directiva de Precisión de Decimales y Formatos Especiales
+
+Para asegurar la coherencia en la adición de nuevos módulos, conectores o venues, se establece como **norma obligatoria** documentar y auditar los formatos de datos y precisiones numéricas requeridas por cada plataforma.
+
+### 4.1. Regla de Registro Documental
+Al integrar un nuevo venue, debes añadir en su correspondiente documentación (o cabecera del adaptador) una tabla especificando:
+1.  **Precio (Tick Size)**: El número máximo de decimales permitidos y el incremento mínimo de precio (ej. `$0.0001` o 4 decimales).
+2.  **Volumen (Lot Size / Step Size)**: El incremento de volumen mínimo (ej. `0.1` o 1 decimal) y la cantidad fraccionaria máxima.
+3.  **Límite Nocional (Min Notional)**: El tamaño monetario mínimo que debe tener la orden para no ser rechazada.
+
+### 4.2. Patrones y Antipatrones de Formateo
+*   **Antipatrón (Flotantes Javascript)**: Enviar números directamente calculados por fórmulas matemáticas al CEX o DEX. Operaciones como `qty = balance / price` generan flotantes con 15 decimales debido al estándar IEEE 754 de punto flotante. Esto causa el rechazo inmediato de la orden en el 100% de los CEXs.
+*   **Patrón DEX (Conversión a Drops / Escala Entera)**: En el DEX de XRPL, los montos en XRP deben expresarse siempre como un string que represente un entero en millonésimas de XRP (drops). El bot debe aplicar siempre `Math.round(volumeXrp * 1_000_000).toString()` antes de la firma. Nunca envíes flotantes con decimales al ledger.
+*   **Patrón CEX (Truncamiento antes del Redondeo)**: No uses `Math.round()` genérico para volúmenes de CEX, ya que redondear hacia arriba puede exceder tu balance real disponible. Usa truncamiento hacia abajo (`Math.floor`) ajustado a la precisión permitida (ej: `Math.floor(qty * 10) / 10` para 1 decimal), garantizando que nunca intentes vender más tokens de los que tienes en balance.
