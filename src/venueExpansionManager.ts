@@ -61,13 +61,15 @@ export class VenueExpansionManager {
   private loadState(): ExpansionState {
     const saved = this.db.getCustomData('expansionState');
     if (saved) {
+      saved.phaseWatchdogHours = 12; // Forzar a 12 horas según requerimiento
+      this.db.saveCustomData('expansionState', saved);
       return saved as ExpansionState;
     }
 
     const defaultState: ExpansionState = {
       activeVenues: ['xrpl_dex', 'mock_cex'],
       currentPhaseStartTime: new Date().toISOString(),
-      phaseWatchdogHours: 24, // 24 horas por defecto
+      phaseWatchdogHours: 12, // 12 horas
       upgradePrompted: false
     };
 
