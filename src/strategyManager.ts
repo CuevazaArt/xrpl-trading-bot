@@ -9,6 +9,7 @@ import { MultiOracle } from './multiOracle.js';
 import { PaperOrderManager } from './paperTrading.js';
 import { HealthMonitor } from './healthMonitor.js';
 import { CLIDashboard } from './cliDashboard.js';
+import type { SelfHealingWatchdog } from './selfHealingWatchdog.js';
 
 const log = createLogger('StrategyManager');
 
@@ -34,6 +35,7 @@ export class XRPLStrategyManager {
   private healthMonitor: HealthMonitor | null = null;
   private cliDash: CLIDashboard | null = null;
   private paperOrderManager: PaperOrderManager | null = null;
+  private watchdog: SelfHealingWatchdog | null = null;
 
   constructor(
     client: Client,
@@ -75,6 +77,13 @@ export class XRPLStrategyManager {
    */
   setCliDashboard(cliDash: CLIDashboard): void {
     this.cliDash = cliDash;
+  }
+
+  /**
+   * Inyecta el Self-Healing Watchdog para state updates y anti-zombie.
+   */
+  setWatchdog(watchdog: SelfHealingWatchdog): void {
+    this.watchdog = watchdog;
   }
 
   /**
@@ -185,6 +194,16 @@ export class XRPLStrategyManager {
       } catch (err) {
         log.error('Error actualizando CLI dashboard:', err);
       }
+    }
+
+    // 6. Actualizar Watchdog con estado post-tick (anti-zombie + checkpoint)
+    if (this.watchdog) {
+      this.watchdog.updateState(
+        this.currentLedger,
+        this.tickCount,
+        marketPrice,
+        this.strategy.name
+      );
     }
   }
 

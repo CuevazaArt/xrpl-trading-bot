@@ -146,6 +146,105 @@ export class JSONDatabase {
   getCustomData(key: string): any {
     return this.data.custom ? this.data.custom[key] : undefined;
   }
+
+  /**
+   * Fuerza la recarga de datos desde el disco, validando su estructura.
+   * Si el archivo no existe o está corrupto, lo inicializa y lo guarda.
+   */
+  reloadAndValidate(): { healthy: boolean; repaired: boolean } {
+    let healthy = true;
+    let repaired = false;
+
+    try {
+      if (!fs.existsSync(this.dbPath)) {
+        this.data = { transactions: [], balances: [] };
+        this.enqueueWrite();
+        return { healthy: false, repaired: true };
+      }
+
+      const fileContent = fs.readFileSync(this.dbPath, 'utf8');
+      let parsed: any;
+      try {
+        parsed = JSON.parse(fileContent);
+      } catch (parseErr) {
+        log.error('Error al parsear el JSON de la base de datos. Re-inicializando...');
+        // Hacer backup del archivo corrupto
+        const backupPath = this.dbPath + `.corrupt.${Date.now()}`;
+        fs.copyFileSync(this.dbPath, backupPath);
+        this.data = { transactions: [], balances: [] };
+        this.enqueueWrite();
+        return { healthy: false, repaired: true };
+      }
+
+      if (!parsed || typeof parsed !== 'object') {
+        parsed = { transactions: [], balances: [] };
+        repaired = true;
+      }
+
+      // Validar y reparar campos in-memory
+      if (!Array.isArray(parsed.transactions)) {
+        parsed.transactions = [];
+        repaired = true;
+      }
+      if (!Array.isArray(parsed.balances)) {
+        parsed.balances = [];
+        repaired = true;
+      }
+
+      // Limpiar transacciones corruptas
+      const corruptTxCount = parsed.transactions.filter((t: any) => !t.timestamp || !t.type).length;
+      if (corruptTxCount > 0) {
+        parsed.transactions = parsed.transactions.filter((t: any) => t.timestamp && t.type);
+        repaired = true;
+      }
+
+      this.data = parsed;
+      if (repaired) {
+        this.enqueueWrite();
+        healthy = false;
+      }
+      return { healthy, repaired };
+    } catch (error) {
+      log.error('Error al recargar y validar la base de datos desde el disco:', error);
+      this.data = { transactions: [], balances: [] };
+      this.enqueueWrite();
+      return { healthy: false, repaired: true };
+    }
+  }
+
+  /**
+   * Poda los datos de forma segura en memoria y encola la escritura en disco.
+   */
+  prune(txLimit = 150, balanceLimit = 300): boolean {
+    let pruned = false;
+
+    if (this.data.transactions && this.data.transactions.length > txLimit) {
+      this.data.transactions = this.data.transactions.slice(-txLimit);
+      pruned = true;
+    }
+
+    if (this.data.balances && this.data.balances.length > balanceLimit) {
+      this.data.balances = this.data.balances.slice(-balanceLimit);
+      pruned = true;
+    }
+
+    if (this.data.custom) {
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      const keys = Object.keys(this.data.custom);
+      for (const key of keys) {
+        const val = this.data.custom[key];
+        if (val?.timestamp && new Date(val.timestamp).getTime() < sevenDaysAgo) {
+          delete this.data.custom[key];
+          pruned = true;
+        }
+      }
+    }
+
+    if (pruned) {
+      this.enqueueWrite();
+    }
+    return pruned;
+  }
 }
 
 // Instancia única (Singleton) para fácil acceso en todo el bot

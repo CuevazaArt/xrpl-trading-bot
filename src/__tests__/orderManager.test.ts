@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock del Client de XRPL
+// Mock del Client de XRPL — usa submit() (HFT async), no submitAndWait
 const mockAutofill = vi.fn();
-const mockSubmitAndWait = vi.fn();
+const mockSubmit = vi.fn();
 
 const mockClient = {
   autofill: mockAutofill,
-  submitAndWait: mockSubmitAndWait,
+  submit: mockSubmit,
 } as any;
 
 // Importar el módulo bajo prueba
@@ -24,16 +24,19 @@ describe('XRPLOrderManager', () => {
     vi.clearAllMocks();
     orderManager = new XRPLOrderManager(mockClient);
 
-    // Configurar mocks por defecto para transacciones exitosas
+    // Configurar mocks por defecto para transacciones exitosas (formato HFT submit)
     mockAutofill.mockResolvedValue({
       TransactionType: 'OfferCreate',
       Account: mockWallet.address,
+      Sequence: 42,
     });
-    mockSubmitAndWait.mockResolvedValue({
+    mockSubmit.mockResolvedValue({
       result: {
-        hash: 'ABC123HASH',
-        Sequence: 42,
-        meta: { TransactionResult: 'tesSUCCESS' },
+        engine_result: 'tesSUCCESS',
+        tx_json: {
+          hash: 'ABC123HASH',
+          Sequence: 42,
+        },
       },
     });
   });
@@ -54,11 +57,11 @@ describe('XRPLOrderManager', () => {
       });
     });
 
-    it('debe firmar y enviar la transacción', async () => {
+    it('debe firmar y enviar la transacción via submit (HFT)', async () => {
       await orderManager.createLimitOrder(mockWallet, '10000000', { currency: 'USD', value: '5', issuer: 'r1' });
 
       expect(mockWallet.sign).toHaveBeenCalled();
-      expect(mockSubmitAndWait).toHaveBeenCalledWith('signed_blob_hex');
+      expect(mockSubmit).toHaveBeenCalledWith('signed_blob_hex');
     });
 
     it('debe retornar success=true y hash cuando tesSUCCESS', async () => {
@@ -70,11 +73,13 @@ describe('XRPLOrderManager', () => {
     });
 
     it('debe retornar success=false cuando la transacción falla', async () => {
-      mockSubmitAndWait.mockResolvedValue({
+      mockSubmit.mockResolvedValue({
         result: {
-          hash: 'FAIL_HASH',
-          Sequence: 43,
-          meta: { TransactionResult: 'tecUNFUNDED_OFFER' },
+          engine_result: 'tecUNFUNDED_OFFER',
+          tx_json: {
+            hash: 'FAIL_HASH',
+            Sequence: 43,
+          },
         },
       });
 
@@ -107,6 +112,7 @@ describe('XRPLOrderManager', () => {
         TransactionType: 'OfferCancel',
         Account: mockWallet.address,
         OfferSequence: offerSequence,
+        Sequence: 50,
       });
 
       await orderManager.cancelOrder(mockWallet, offerSequence);

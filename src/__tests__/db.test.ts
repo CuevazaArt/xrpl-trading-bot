@@ -94,15 +94,15 @@ describe('JSONDatabase', () => {
     expect(transactions.length).toBeLessThanOrEqual(200);
   });
 
-  it('debe respetar el límite de 100 balances', async () => {
+  it('debe respetar el límite de 500 balances', async () => {
     const db = await createFreshDb();
 
-    for (let i = 0; i < 110; i++) {
+    for (let i = 0; i < 510; i++) {
       db.logBalance(`${i}`, `${i * 2}`);
     }
 
     const balances = db.getBalancesHistory();
-    expect(balances.length).toBeLessThanOrEqual(100);
+    expect(balances.length).toBeLessThanOrEqual(500);
   });
 
   it('debe retornar null si no hay balances en instancia nueva', async () => {
@@ -117,5 +117,102 @@ describe('JSONDatabase', () => {
 
     const retrieved = db.getCustomData('test_key');
     expect(retrieved).toEqual(testData);
+  });
+
+  describe('reloadAndValidate', () => {
+    it('debe recargar correctamente un archivo válido y reportar healthy', async () => {
+      const db = await createFreshDb();
+      const sampleData = {
+        transactions: [{ timestamp: new Date().toISOString(), type: 'BUY', hash: 'h1', status: 'tesSUCCESS', detail: {} }],
+        balances: [{ timestamp: new Date().toISOString(), xrp: '10', usd: '20' }]
+      };
+      fs.writeFileSync(dbPath, JSON.stringify(sampleData, null, 2), 'utf8');
+
+      const result = db.reloadAndValidate();
+      expect(result.healthy).toBe(true);
+      expect(result.repaired).toBe(false);
+      expect(db.getTransactions().length).toBe(1);
+      expect(db.getBalancesHistory().length).toBe(1);
+    });
+
+    it('debe recrear el estado si el archivo de base de datos no existe', async () => {
+      const db = await createFreshDb();
+      if (fs.existsSync(dbPath)) {
+        fs.unlinkSync(dbPath);
+      }
+
+      const result = db.reloadAndValidate();
+      expect(result.healthy).toBe(false);
+      expect(result.repaired).toBe(true);
+      expect(db.getTransactions()).toEqual([]);
+      expect(db.getBalancesHistory()).toEqual([]);
+    });
+
+    it('debe detectar JSON corrupto, respaldarlo, y recrear una DB limpia', async () => {
+      const db = await createFreshDb();
+      fs.writeFileSync(dbPath, 'este no es un JSON { valido }', 'utf8');
+
+      const result = db.reloadAndValidate();
+      expect(result.healthy).toBe(false);
+      expect(result.repaired).toBe(true);
+      expect(db.getTransactions()).toEqual([]);
+
+      // Verificar que se creó un archivo .corrupt
+      const files = fs.readdirSync(dataDir);
+      const corruptBackup = files.find(f => f.startsWith('db.json.corrupt.'));
+      expect(corruptBackup).toBeDefined();
+
+      // Limpiar archivo backup corrupto de prueba
+      if (corruptBackup) {
+        fs.unlinkSync(path.join(dataDir, corruptBackup));
+      }
+    });
+
+    it('debe reparar campos faltantes o inválidos', async () => {
+      const db = await createFreshDb();
+      fs.writeFileSync(dbPath, JSON.stringify({ transactions: 'no es un array', custom: {} }), 'utf8');
+
+      const result = db.reloadAndValidate();
+      expect(result.healthy).toBe(false);
+      expect(result.repaired).toBe(true);
+      expect(db.getTransactions()).toEqual([]);
+      expect(db.getBalancesHistory()).toEqual([]);
+    });
+  });
+
+  describe('prune', () => {
+    it('debe podar transacciones y balances a los límites indicados', async () => {
+      const db = await createFreshDb();
+
+      // Agregar datos por encima de los límites de poda
+      for (let i = 0; i < 20; i++) {
+        db.logTransaction('TX', `h${i}`, 'tesSUCCESS');
+        db.logBalance(`${i}`, `${i}`);
+      }
+
+      // Podar a 5 transacciones y 10 balances
+      const pruned = db.prune(5, 10);
+      expect(pruned).toBe(true);
+      expect(db.getTransactions().length).toBe(5);
+      expect(db.getBalancesHistory().length).toBe(10);
+      // Deben quedar los últimos
+      expect(db.getTransactions()[0].hash).toBe('h15');
+      expect(db.getBalancesHistory()[0].xrp).toBe('10');
+    });
+
+    it('debe podar datos personalizados (custom) viejos (>7 días)', async () => {
+      const db = await createFreshDb();
+
+      const oldTimestamp = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+      const newTimestamp = new Date().toISOString();
+
+      db.saveCustomData('old_key', { timestamp: oldTimestamp, value: 'old' });
+      db.saveCustomData('new_key', { timestamp: newTimestamp, value: 'new' });
+
+      const pruned = db.prune(150, 300);
+      expect(pruned).toBe(true);
+      expect(db.getCustomData('old_key')).toBeUndefined();
+      expect(db.getCustomData('new_key')).toBeDefined();
+    });
   });
 });

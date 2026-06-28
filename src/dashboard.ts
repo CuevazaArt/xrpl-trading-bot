@@ -3,6 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { db } from './db.js';
 import { config } from './config.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('Dashboard');
 
 export class XRPLDashboard {
   private port: number = config.dashboardPort;
@@ -97,15 +100,14 @@ export class XRPLDashboard {
     });
 
     this.server.listen(this.port, () => {
-      // No usamos logger aquí para no crear dependencia circular
-      console.log(`[DASHBOARD] Servidor web iniciado en: http://localhost:${this.port}`);
+      log.info(`Servidor web iniciado en: http://localhost:${this.port}`);
     });
   }
 
   stop() {
     if (this.server) {
       this.server.close();
-      console.log('[DASHBOARD] Servidor web apagado.');
+      log.info('Servidor web apagado.');
     }
   }
 

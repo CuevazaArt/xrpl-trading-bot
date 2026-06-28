@@ -92,12 +92,58 @@ const MODULE_SHORT: Record<string, string> = {
   'Main': 'Main',
 };
 
-// Log file setup
+// Log file setup — async writes + rotation
 const logDir = path.join(process.cwd(), 'data');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 const logFilePath = path.join(logDir, 'app_raw.log');
+
+// Rotation config
+const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024; // 5MB per file
+const MAX_ROTATED_FILES = 3;
+let logSizeEstimate = 0;
+let rotationInProgress = false;
+
+// Initialize size estimate
+try {
+  if (fs.existsSync(logFilePath)) {
+    logSizeEstimate = fs.statSync(logFilePath).size;
+  }
+} catch { logSizeEstimate = 0; }
+
+/**
+ * Rota el archivo de log cuando supera MAX_LOG_SIZE_BYTES.
+ * app_raw.log → app_raw.log.1, .log.1 → .log.2, .log.2 → .log.3, .log.3 se elimina.
+ */
+function rotateLogFile(): void {
+  if (rotationInProgress) return;
+  rotationInProgress = true;
+
+  try {
+    // Eliminar el más viejo
+    const oldest = `${logFilePath}.${MAX_ROTATED_FILES}`;
+    if (fs.existsSync(oldest)) fs.unlinkSync(oldest);
+
+    // Rotar hacia arriba: .2 → .3, .1 → .2
+    for (let i = MAX_ROTATED_FILES - 1; i >= 1; i--) {
+      const from = `${logFilePath}.${i}`;
+      const to = `${logFilePath}.${i + 1}`;
+      if (fs.existsSync(from)) fs.renameSync(from, to);
+    }
+
+    // Mover actual a .1
+    if (fs.existsSync(logFilePath)) {
+      fs.renameSync(logFilePath, `${logFilePath}.1`);
+    }
+
+    logSizeEstimate = 0;
+  } catch {
+    // Silenciar errores de rotación — no son críticos
+  } finally {
+    rotationInProgress = false;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
 // BANNER
@@ -234,13 +280,24 @@ class Logger {
     const timestamp = new Date().toISOString();
     const label = LEVEL_STYLE[level].label;
 
-    // Always write raw to file (for post-analysis)
+    // Always write raw to file (for post-analysis) — async to avoid blocking event loop
     const rawLine = `[${timestamp}] [${label}] [${this.module}] ${message}${data !== undefined ? ' ' + (typeof data === 'object' ? JSON.stringify(data) : data) : ''}\n`;
-    try {
-      fs.appendFileSync(logFilePath, rawLine);
-    } catch {
-      // Ignore file write failures
+    const lineBytes = Buffer.byteLength(rawLine, 'utf8');
+    logSizeEstimate += lineBytes;
+
+    // Trigger rotation if file exceeds max size
+    if (logSizeEstimate > MAX_LOG_SIZE_BYTES) {
+      rotateLogFile();
     }
+
+    // Async write — deferred to next event loop iteration to avoid blocking the tick
+    setImmediate(() => {
+      try {
+        fs.appendFileSync(logFilePath, rawLine);
+      } catch {
+        // Ignore file write failures — best-effort logging
+      }
+    });
 
     // Terminal output with colors
     if (level < Logger.globalLevel) return;

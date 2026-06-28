@@ -5,10 +5,20 @@ import { config } from './config.js';
 
 const log = createLogger('WalletManager');
 
+// Cache para server_info — la reserva base cambia cada meses
+const SERVER_INFO_CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutos
+
+interface ServerInfoCache {
+  baseReserveXrp: number;
+  ownerReserveXrp: number;
+  fetchedAt: number;
+}
+
 
 export class XRPLWalletManager {
   private client: Client;
   private wallet: Wallet | null = null;
+  private serverInfoCache: ServerInfoCache | null = null;
 
   constructor(client: Client) {
     this.client = client;
@@ -149,17 +159,17 @@ export class XRPLWalletManager {
   /**
    * Verifica si el balance de XRP es suficiente para cubrir la reserva requerida por la red
    * (10 XRP de base + 2 XRP por objeto) más el buffer de seguridad configurado.
+   * 
+   * server_info se cachea con TTL de 60 min para evitar ~240 RPCs/min innecesarios.
+   * La reserva base de XRPL cambia cada meses; no necesitamos consultarla en cada tick.
    */
   async hasEnoughReserve(): Promise<boolean> {
     if (!this.wallet) {
       throw new Error('Billetera no inicializada.');
     }
     try {
-      // 1. Obtener la reserva REAL del servidor (no hardcodeada)
-      const serverInfo = await this.client.request({ command: 'server_info' });
-      const validatedLedger = serverInfo.result.info.validated_ledger;
-      const baseReserveXrp = validatedLedger?.reserve_base_xrp ?? 10;
-      const ownerReserveXrp = validatedLedger?.reserve_inc_xrp ?? 2;
+      // 1. Obtener la reserva del servidor (cacheada con TTL de 60 min)
+      const { baseReserveXrp, ownerReserveXrp } = await this.getServerReserveInfo();
 
       // 2. Obtener OwnerCount de la cuenta
       const response = await this.client.request({
@@ -192,5 +202,33 @@ export class XRPLWalletManager {
       log.error('Error al verificar la reserva de XRP de la cuenta:', error);
       return false;
     }
+  }
+
+  /**
+   * Obtiene los parámetros de reserva del servidor, usando caché con TTL de 60 min.
+   * La reserva base de XRPL (actualmente 1 XRP base + 0.2 XRP/objeto) cambia
+   * muy raramente — no tiene sentido consultar server_info en cada tick.
+   */
+  private async getServerReserveInfo(): Promise<{ baseReserveXrp: number; ownerReserveXrp: number }> {
+    const now = Date.now();
+
+    // Retornar desde caché si válido
+    if (this.serverInfoCache && (now - this.serverInfoCache.fetchedAt) < SERVER_INFO_CACHE_TTL_MS) {
+      return {
+        baseReserveXrp: this.serverInfoCache.baseReserveXrp,
+        ownerReserveXrp: this.serverInfoCache.ownerReserveXrp,
+      };
+    }
+
+    // Fetch fresco
+    const serverInfo = await this.client.request({ command: 'server_info' });
+    const validatedLedger = serverInfo.result.info.validated_ledger;
+    const baseReserveXrp = validatedLedger?.reserve_base_xrp ?? 10;
+    const ownerReserveXrp = validatedLedger?.reserve_inc_xrp ?? 2;
+
+    this.serverInfoCache = { baseReserveXrp, ownerReserveXrp, fetchedAt: now };
+    log.debug(`server_info cacheado: base_reserve=${baseReserveXrp} XRP, owner_reserve=${ownerReserveXrp} XRP (TTL: 60min)`);
+
+    return { baseReserveXrp, ownerReserveXrp };
   }
 }

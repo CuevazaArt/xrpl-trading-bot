@@ -18,3 +18,7 @@
 
 ## Architecture Reference
 - See `docs/ARCHITECTURE.md` for full execution flow, patterns, antipatterns, and performance baselines.
+
+## Interaction Flow & Strategy Assembly
+- **Operator Workflow**: When the user requests a bot/strategy assembly (arbitrage first), the agent must formulate the design, ask ONLY for necessary API keys/credentials and minimum funding requirements, configure/compile the codebase, run the bot in a task, and actively manage/monitor execution statistics (logs, P&L, risk) in real time.
+

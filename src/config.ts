@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { Logger, LogLevel } from './logger.js';
+import { Logger, LogLevel, createLogger } from './logger.js';
 
 // Cargar variables de entorno
 dotenv.config();
@@ -133,6 +133,7 @@ Logger.setLevel(levelMap[config.logLevel] ?? LogLevel.DEBUG);
 
 // Validación básica
 if (!config.xrplWsUrl) {
-  console.warn("ADVERTENCIA: XRPL_WS_URL no está definido en el archivo .env. Usando Testnet por defecto.");
+  const log = createLogger('Config');
+  log.warn("XRPL_WS_URL no está definido en el archivo .env. Usando Testnet por defecto.");
 }
 

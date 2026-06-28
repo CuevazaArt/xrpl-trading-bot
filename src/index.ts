@@ -15,6 +15,8 @@ import { TelegramNotifier } from './telegramNotifier.js';
 import { CLIDashboard } from './cliDashboard.js';
 import { MultiOracle } from './multiOracle.js';
 import { getSeedFromVault, vaultExists } from './seedVault.js';
+import { runConfigValidation } from './configValidator.js';
+import { SelfHealingWatchdog } from './selfHealingWatchdog.js';
 
 const log = createLogger('Main');
 
@@ -64,6 +66,9 @@ function setupReconnection(client: Client, onReconnected: () => Promise<void>) {
 async function main() {
   log.info('Iniciando bot de trading XRPL...');
   printFlagsSummary(flags);
+
+  // ─── VALIDACIÓN DE CONFIGURACIÓN ───
+  runConfigValidation(config as unknown as Record<string, any>);
 
   // ─── DRY RUN: mostrar config y salir ───
   if (flags.dryRun) {
@@ -263,6 +268,13 @@ async function main() {
   const { startArbitrageScanner } = await import('./arbitrage.js');
   startArbitrageScanner(client, wallet);
 
+  // 12. Self-Healing Watchdog — rutina integrada de auto-sanación
+  const watchdog = new SelfHealingWatchdog(client, 60); // Diagnóstico cada 60s
+  watchdog.setOracle(sharedOracle);
+
+  // Conectar el watchdog al strategy manager para state updates
+  strategyManager.setWatchdog(watchdog);
+
   // 12. Health Monitor (condicional)
   let healthMonitor: HealthMonitor | null = null;
   let telegram: TelegramNotifier | null = null;
@@ -334,6 +346,14 @@ async function main() {
     healthMonitor.start(interval);
   }
 
+  // Inyectar Telegram al watchdog (después de que se inicialice)
+  if (telegram?.isConfigured()) {
+    watchdog.setTelegram(telegram);
+  }
+
+  // Arrancar el watchdog (restaura checkpoint de sesión anterior si existe)
+  watchdog.start();
+
   // Reconexión automática
   const restoreSubscriptions = async () => {
     try {
@@ -352,6 +372,7 @@ async function main() {
     log.info('Recibida señal de apagado. Limpiando recursos...');
     try {
       await strategyManager.cancelAllOrders();
+      await watchdog.stop(); // Guardar checkpoint con graceful=true
       if (healthMonitor) healthMonitor.stop();
       if (cliDash) cliDash.stop();
       if (dashboard) dashboard.stop();
@@ -377,10 +398,46 @@ main().catch((error) => {
   process.exit(1);
 });
 
-// Manejadores globales para evitar caídas del proceso por errores asíncronos imprevistos
-process.on('uncaughtException', (error) => {
-  log.error('EXCEPCIÓN NO CONTROLADA DETECTADA (uncaughtException):', error);
-  // Al ser un bot de trading, dejamos que el proceso siga vivo e intente recuperarse
+// =====================================================================
+// MANEJADORES GLOBALES DE ERRORES (PRODUCCIÓN)
+// =====================================================================
+// En producción, un uncaughtException indica estado corrupto.
+// La acción segura es: loguear, intentar cancelar órdenes, y salir.
+// PM2 o Docker reiniciarán el proceso automáticamente.
+
+let isShuttingDown = false;
+
+process.on('uncaughtException', async (error) => {
+  log.error('🚨 EXCEPCIÓN NO CONTROLADA DETECTADA (uncaughtException):', error);
+
+  // Evitar re-entrancia si ya estamos apagando
+  if (isShuttingDown) {
+    log.error('Ya se está ejecutando un shutdown. Forzando exit.');
+    process.exit(1);
+  }
+  isShuttingDown = true;
+
+  // Dar 5 segundos para intentar limpiar órdenes activas antes de morir
+  const forceExitTimer = setTimeout(() => {
+    log.error('Timeout de limpieza alcanzado. Forzando exit.');
+    process.exit(1);
+  }, 5000);
+
+  try {
+    // Intentar notificar vía Telegram si está configurado
+    const telegram = new TelegramNotifier();
+    if (telegram.isConfigured()) {
+      await telegram.sendCriticalAlert(
+        `uncaughtException: ${error instanceof Error ? error.message : String(error)}`
+      ).catch(() => {}); // No propagar errores de Telegram
+    }
+  } catch {
+    // Ignorar — estamos en estado inestable
+  }
+
+  clearTimeout(forceExitTimer);
+  log.error('Proceso terminado por excepción no controlada. PM2/Docker reiniciarán.');
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {

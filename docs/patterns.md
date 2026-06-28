@@ -47,3 +47,31 @@ Este documento recopila las mejores prácticas (patrones) y errores comunes a ev
 ### 3. Redirección Estándar a NUL en Entornos Windows Restringidos
 *   **Problema:** Ejecutar comandos de terminal asíncronos mediante runners que intentan redirigir la salida estándar a `NUL` con permisos excesivos (causando error `opening NUL for ACL write: Access is denied`).
 *   **Solución correctiva:** Utilizar wrappers de comandos directos de Windows (`npm.cmd` o `npx.cmd`) o configurar políticas de bypass de ejecución (`Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process`) en el proceso local.
+
+---
+
+## 🔒 Patrones Nuevos de Producción y Endurecimiento (Helena v2)
+
+### 1. Salida de Emergencia Controlada (Fail-Fast Exit) en Excepciones No Controladas
+*   **Problema:** Dejar que un `uncaughtException` mantenga el proceso del bot de trading vivo. Un bot vivo después de una excepción inesperada puede estar operando con variables de estado corruptas, límites violados o hilos colgados, resultando en pérdidas de fondos catastróficas.
+*   **Solución (Patrón):** Capturar la excepción globalmente, detener/cancelar órdenes activas mediante llamadas rápidas de red, enviar una alerta crítica prioritaria a Telegram y abortar el proceso inmediatamente mediante `process.exit(1)`. PM2 o Docker se encargarán del reinicio limpio desde cero.
+
+### 2. Prevención de Incoherencia de Caché de Base de Datos
+*   **Problema:** Leer/escribir de forma directa y externa el archivo `db.json` para realizar podas o revisiones de integridad mientras el bot está en ejecución. El bot mantiene una caché local (`db.data`) en memoria y sobrescribirá cualquier cambio externo en su siguiente llamada a `logTransaction()` o `logBalance()`.
+*   **Solución (Patrón):** Todas las tareas de diagnóstico, validación de sintaxis, respaldos por corrupción y podas periódicas de datos antiguos deben delegarse al singleton central (`db`) a través de métodos encapsulados en memoria (`db.reloadAndValidate()` y `db.prune()`), sincronizando automáticamente los cambios en el disco de manera coherente y ordenada.
+
+### 3. Caching de Consultas RPC de Configuración (Reserva de Red)
+*   **Problema:** Invocar llamadas de red costosas (como `server_info`) en cada tick de ledger (~3 segundos) para calcular reservas requeridas. Esto sobrecarga el nodo RPC con unas 240 peticiones por minuto de información que casi nunca varía.
+*   **Solución (Patrón):** Cachear los parámetros de reserva devueltos por `server_info` con un TTL alto (ej. 60 minutos). La reserva base y por objeto de la red XRPL cambia una vez al año; no es necesario sobrecargar el nodo.
+
+### 4. Escrituras de Log Async sin Bloqueo de Event Loop
+*   **Problema:** Usar `fs.appendFileSync` en el logger del bot para escribir cada traza. En trading de alta frecuencia (HFT), las llamadas síncronas a disco pueden bloquear el event loop de Node.js retrasando los ticks del bot y perdiendo el edge de precio.
+*   **Solución (Patrón):** Deferir las escrituras a disco usando `setImmediate()` combinado con un try/catch controlado para que el guardado a disco se realice en la siguiente iteración del bucle de eventos, manteniendo la ejecución de la estrategia fluida e instantánea.
+
+### 5. Watchdog de Ticks Colgados (Anti-Zombie)
+*   **Problema:** Si el nodo RPC deja de responder a la mitad de una llamada de red de una estrategia y no hay un timeout estricto, el bot se quedará en un estado indefinidamente colgado (`tickInProgress = true`) sin hacer operaciones pero pareciendo estar vivo.
+*   **Solución (Patrón):** Implementar un watchdog periódico e independiente que verifique el tiempo transcurrido desde el último tick exitoso. Si el tiempo excede un umbral (ej. 60 segundos), se emite una advertencia de tick inactivo y se reporta estado degradado o se detiene el proceso para forzar un reinicio de red.
+
+### 6. Alertas Críticas con Límite de Frecuencia (Rate-Limiting)
+*   **Problema:** Enviar mensajes o excepciones de error de red repetitivos a canales de Telegram en cada fallo asíncrono, saturando los límites de la API de Telegram (bloqueo por spam) y llenando el canal del usuario de ruido inútil.
+*   **Solución (Patrón):** Implementar un cooldown de alertas críticas (ej. máximo 1 mensaje crítico por minuto) para consolidar fallos o suprimir spam repetitivo durante incidentes en cadena.

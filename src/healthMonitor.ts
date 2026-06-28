@@ -44,6 +44,14 @@ export interface HealthSnapshot {
     winRate: number;
   };
 
+  system: {
+    memoryMB: number;       // RSS en MB
+    heapUsedMB: number;     // Heap usado en MB
+    heapTotalMB: number;    // Heap total en MB
+    dataDirSizeMB: number;  // Tamaño del directorio data/ en MB
+    lastTickAgoSeconds: number; // Segundos desde el último tick
+  };
+
   features: {
     paperTrading: boolean;
     telegram: boolean;
@@ -84,6 +92,8 @@ export class HealthMonitor {
   private currentLedger: number = 0;
   private tickCount: number = 0;
   private strategyName: string = 'unknown';
+  private lastTickTime: number = Date.now();
+  private dataDir: string;
 
   // Callbacks para obtener datos en tiempo real
   private fundsFetcher: (() => Promise<HealthSnapshot['funds']>) | null = null;
@@ -97,6 +107,7 @@ export class HealthMonitor {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
+    this.dataDir = dir;
     this.logPath = path.join(dir, 'health_log.jsonl');
 
     // Contar líneas existentes
@@ -123,6 +134,7 @@ export class HealthMonitor {
     this.currentLedger = ledger;
     this.tickCount = tick;
     this.strategyName = strategy;
+    this.lastTickTime = Date.now();
   }
 
   /**
@@ -223,6 +235,30 @@ export class HealthMonitor {
     const online = this.client.isConnected();
     if (!online) warnings.push('XRPL desconectado');
 
+    // System metrics
+    const mem = process.memoryUsage();
+    const lastTickAgoSeconds = Math.floor((Date.now() - this.lastTickTime) / 1000);
+    const dataDirSizeMB = this.getDataDirSizeMB();
+
+    const system = {
+      memoryMB: Math.round(mem.rss / 1024 / 1024),
+      heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
+      dataDirSizeMB,
+      lastTickAgoSeconds,
+    };
+
+    // Watchdog warnings
+    if (lastTickAgoSeconds > 60 && this.tickCount > 0) {
+      warnings.push(`Tick inactivo por ${lastTickAgoSeconds}s (posible hang)`);
+    }
+    if (system.memoryMB > 180) {
+      warnings.push(`Memoria alta: ${system.memoryMB}MB RSS`);
+    }
+    if (dataDirSizeMB > 100) {
+      warnings.push(`data/ excede 100MB: ${dataDirSizeMB.toFixed(1)}MB`);
+    }
+
     // Features
     const features = {
       paperTrading: flags.paperTrading,
@@ -241,6 +277,7 @@ export class HealthMonitor {
       oracle: oracleData,
       funds,
       paper,
+      system,
       features,
       warnings,
     };
@@ -271,6 +308,32 @@ export class HealthMonitor {
       log.debug(`Health log rotado: ${lines.length} → ${kept.length} líneas`);
     } catch (error) {
       log.error('Error al rotar health log:', error);
+    }
+  }
+
+  /**
+   * Calcula el tamaño aproximado del directorio data/ en MB.
+   * Usado para detectar crecimiento descontrolado de logs/db.
+   */
+  private getDataDirSizeMB(): number {
+    try {
+      if (!fs.existsSync(this.dataDir)) return 0;
+      let totalBytes = 0;
+      const entries = fs.readdirSync(this.dataDir);
+      for (const entry of entries) {
+        const fullPath = path.join(this.dataDir, entry);
+        try {
+          const stat = fs.statSync(fullPath);
+          if (stat.isFile()) {
+            totalBytes += stat.size;
+          }
+        } catch {
+          // Ignorar archivos inaccesibles
+        }
+      }
+      return totalBytes / (1024 * 1024);
+    } catch {
+      return 0;
     }
   }
 }

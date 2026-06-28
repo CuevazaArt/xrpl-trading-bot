@@ -21,6 +21,8 @@ export class TelegramNotifier {
   private botToken: string;
   private chatId: string;
   private readonly baseUrl: string;
+  private lastCriticalAlertAt: number = 0;
+  private readonly criticalAlertCooldownMs: number = 60_000; // 1 minuto entre alertas críticas
 
   constructor() {
     this.botToken = config.telegramBotToken;
@@ -134,6 +136,24 @@ export class TelegramNotifier {
    */
   async sendWarning(warning: string): Promise<void> {
     await this.sendMessage(`⚠️ *Warning:* ${warning}`);
+  }
+
+  /**
+   * Envía una alerta CRÍTICA que requiere atención inmediata.
+   * Rate limited: máximo 1 alerta por minuto para evitar spam en cascada.
+   * 
+   * Usar para: uncaughtException, oracle total failure, balance peligrosamente bajo.
+   */
+  async sendCriticalAlert(message: string): Promise<void> {
+    const now = Date.now();
+    if ((now - this.lastCriticalAlertAt) < this.criticalAlertCooldownMs) {
+      log.warn(`Alerta crítica suprimida por cooldown (${Math.ceil((this.criticalAlertCooldownMs - (now - this.lastCriticalAlertAt)) / 1000)}s restantes).`);
+      return;
+    }
+    this.lastCriticalAlertAt = now;
+
+    const text = `🚨🚨 *ALERTA CRÍTICA — Helena*\n━━━━━━━━━━━━━━━━━━━━━\n${message}\n\n⏰ ${new Date().toISOString()}`;
+    await this.sendMessage(text);
   }
 
   // =====================================================================
