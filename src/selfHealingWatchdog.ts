@@ -7,6 +7,7 @@ import { db } from './db.js';
 import { MultiOracle } from './multiOracle.js';
 import { TelegramNotifier } from './telegramNotifier.js';
 import { config } from './config.js';
+import { VenueExpansionManager } from './venueExpansionManager.js';
 
 const log = createLogger('Watchdog');
 
@@ -62,6 +63,7 @@ export class SelfHealingWatchdog {
   private client: Client;
   private oracle: MultiOracle | null = null;
   private telegram: TelegramNotifier | null = null;
+  private expansionManager: VenueExpansionManager | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
 
   // Configuración
@@ -110,6 +112,7 @@ export class SelfHealingWatchdog {
 
   setOracle(oracle: MultiOracle): void { this.oracle = oracle; }
   setTelegram(telegram: TelegramNotifier): void { this.telegram = telegram; }
+  setExpansionManager(em: VenueExpansionManager): void { this.expansionManager = em; }
 
   /**
    * Actualiza el estado conocido del bot (llamado desde strategyManager en cada tick).
@@ -216,7 +219,12 @@ export class SelfHealingWatchdog {
     // 7. Podar DB antes de guardar si es necesario
     this.pruneDBIfNeeded();
 
-    // 8. Guardar checkpoint periódico
+    // 8. Evaluar expansión de venues/nodos
+    if (this.expansionManager) {
+      await this.expansionManager.evaluateExpansionTick();
+    }
+
+    // 9. Guardar checkpoint periódico de estado
     this.saveCheckpoint(false);
 
     // Determinar salud general

@@ -18,6 +18,7 @@ import { getSeedFromVault, vaultExists } from './seedVault.js';
 import { runConfigValidation } from './configValidator.js';
 import { SelfHealingWatchdog } from './selfHealingWatchdog.js';
 import { LogMonitor } from './logMonitor.js';
+import { VenueExpansionManager } from './venueExpansionManager.js';
 
 const log = createLogger('Main');
 
@@ -85,9 +86,11 @@ async function main() {
     process.exit(0);
   }
 
-  // ─── INICIAR VIGILANTE DE LOGS PERPETUO ───
+  // ─── INICIAR VIGILANTE DE LOGS PERPETUO Y EXPANSIÓN DE VENUES ───
   const logMonitor = new LogMonitor(db);
   logMonitor.start();
+
+  const venueExpansionManager = new VenueExpansionManager(db);
 
   // 1. Dashboard Web (condicional)
   let dashboard: XRPLDashboard | null = null;
@@ -278,6 +281,7 @@ async function main() {
   // 12. Self-Healing Watchdog — rutina integrada de auto-sanación
   const watchdog = new SelfHealingWatchdog(client, 60); // Diagnóstico cada 60s
   watchdog.setOracle(sharedOracle);
+  watchdog.setExpansionManager(venueExpansionManager);
 
   // Conectar el watchdog al strategy manager para state updates
   strategyManager.setWatchdog(watchdog);
