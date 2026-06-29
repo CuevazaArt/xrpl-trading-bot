@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { db } from './db.js';
-import { config } from './config.js';
+import { config, reloadConfig } from './config.js';
 import { createLogger } from './logger.js';
 import { apiFuse } from './cexAdapters/apiFuse.js';
 import { weightGovernor } from './cexAdapters/weightGovernor.js';
@@ -77,6 +77,25 @@ export class XRPLDashboard {
           'Access-Control-Allow-Origin': '*'
         });
         res.end(JSON.stringify({ success: true, message: 'API Fuse restablecido manualmente.' }));
+        return;
+      }
+
+      // 1.3 Endpoint API para recargar la configuración en caliente
+      if (req.url?.startsWith('/api/config/reload') && req.method === 'POST') {
+        try {
+          reloadConfig();
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: true, message: 'Configuración recargada en caliente.' }));
+        } catch (err) {
+          res.writeHead(500, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(JSON.stringify({ success: false, error: (err as any).message }));
+        }
         return;
       }
 

@@ -237,7 +237,12 @@ export const DASHBOARD_HTML = `<!DOCTYPE html>
         <h1>XRPL Trading Bot</h1>
         <p style="color: var(--text-muted); margin-top: 5px;">Panel de Control y Monitorización de Estrategia</p>
       </div>
-      <div class="status-tag" id="strategy-tag" style="background: rgba(91, 109, 246, 0.15); border: 1px solid var(--accent-color); color: var(--text-main);">Cargando Estrategia...</div>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <button id="reloadConfigBtn" style="background: rgba(91, 109, 246, 0.1); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;">
+          Recargar Config (.env)
+        </button>
+        <div class="status-tag" id="strategy-tag" style="background: rgba(91, 109, 246, 0.15); border: 1px solid var(--accent-color); color: var(--text-main);">Cargando Estrategia...</div>
+      </div>
     </header>
 
     <div class="dashboard-grid">
@@ -510,6 +515,25 @@ export const DASHBOARD_HTML = `<!DOCTYPE html>
           updateDashboard();
         } else {
           alert('Error al restablecer fusible.');
+        }
+      } catch (err) {
+        alert('Error de red: ' + (err as any).message);
+      }
+    });
+
+    document.getElementById('reloadConfigBtn').addEventListener('click', async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || '';
+        const reloadUrl = token ? '/api/config/reload?token=' + encodeURIComponent(token) : '/api/config/reload';
+        
+        const response = await fetch(reloadUrl, { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+          alert('Configuración recargada con éxito desde el archivo .env.');
+          updateDashboard();
+        } else {
+          alert('Error al recargar configuración: ' + result.error);
         }
       } catch (err) {
         alert('Error de red: ' + (err as any).message);
