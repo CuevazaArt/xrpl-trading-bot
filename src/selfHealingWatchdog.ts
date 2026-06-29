@@ -96,8 +96,11 @@ export class SelfHealingWatchdog {
     this.client = client;
     this.intervalMs = intervalSeconds * 1000;
     this.dataDir = path.join(process.cwd(), 'data');
-    this.checkpointPath = path.join(this.dataDir, 'checkpoint.json');
-    this.dbPath = path.join(this.dataDir, 'db.json');
+    const strategy = config.strategy || 'unknown';
+    const issuer = config.usdIssuer || 'default';
+    const isTest = process.env.NODE_ENV === 'test';
+    this.checkpointPath = isTest ? path.join(this.dataDir, 'checkpoint.json') : path.join(this.dataDir, `checkpoint_${strategy}_${issuer}.json`);
+    this.dbPath = isTest ? path.join(this.dataDir, 'db.json') : path.join(this.dataDir, `db_${strategy}_${issuer}.json`);
     this.sessionId = this.generateSessionId();
 
     // Asegurar que el directorio de datos existe
@@ -448,12 +451,16 @@ export class SelfHealingWatchdog {
   private aggressivePrune(): void {
     try {
       // Eliminar logs rotados
-      const logBase = path.join(this.dataDir, 'app_raw.log');
+      const strategy = config.strategy || 'unknown';
+      const issuer = config.usdIssuer || 'default';
+      const isTest = process.env.NODE_ENV === 'test';
+      const logFileName = isTest ? 'app_raw.log' : `app_raw_${strategy}_${issuer}.log`;
+      const logBase = path.join(this.dataDir, logFileName);
       for (let i = 1; i <= 5; i++) {
         const rotated = `${logBase}.${i}`;
         if (fs.existsSync(rotated)) {
           fs.unlinkSync(rotated);
-          log.info(`🗑️ Eliminado log rotado: app_raw.log.${i}`);
+          log.info(`🗑️ Eliminado log rotado: ${logFileName}.${i}`);
         }
       }
 

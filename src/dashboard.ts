@@ -107,14 +107,18 @@ export class XRPLDashboard {
         });
         
         try {
-          const logPath = path.join(process.cwd(), 'data', 'app_raw.log');
+          const strategy = config.strategy || 'unknown';
+          const issuer = config.usdIssuer || 'default';
+          const isTest = process.env.NODE_ENV === 'test';
+          const logFileName = isTest ? 'app_raw.log' : `app_raw_${strategy}_${issuer}.log`;
+          const logPath = path.join(process.cwd(), 'data', logFileName);
           if (fs.existsSync(logPath)) {
             const content = fs.readFileSync(logPath, 'utf8');
             const lines = content.split('\n').filter(Boolean);
             const lastLines = lines.slice(-40); // Últimos 40 logs
             res.end(JSON.stringify({ logs: lastLines }));
           } else {
-            res.end(JSON.stringify({ logs: ['El bot aún no ha generado registros en app_raw.log.'] }));
+            res.end(JSON.stringify({ logs: [`El bot aún no ha generado registros en ${logFileName}.`] }));
           }
         } catch (err) {
           res.end(JSON.stringify({ logs: [`Error leyendo logs: ${(err as any).message}`] }));

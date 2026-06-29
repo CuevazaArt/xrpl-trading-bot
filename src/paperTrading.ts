@@ -4,6 +4,7 @@ import path from 'path';
 import { Wallet, Amount } from 'xrpl';
 import { XRPLOrderManager } from './orderManager.js';
 import { createLogger } from './logger.js';
+import { config } from './config.js';
 
 const log = createLogger('PaperTrading');
 
@@ -84,7 +85,9 @@ class PaperTradingDB {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    this.dbPath = path.join(dir, 'paper_trades.json');
+    const issuer = config.usdIssuer || 'default';
+    const isTest = process.env.NODE_ENV === 'test';
+    this.dbPath = isTest ? path.join(dir, 'paper_trades.json') : path.join(dir, `paper_trades_${strategy}_${issuer}.json`);
 
     if (fs.existsSync(this.dbPath)) {
       try {

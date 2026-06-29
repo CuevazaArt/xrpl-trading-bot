@@ -18,7 +18,13 @@ export class LogMonitor {
 
   constructor(db: JSONDatabase, logFilePath?: string) {
     this.db = db;
-    this.logPath = logFilePath || path.join(process.cwd(), 'data', 'app_raw.log');
+    const strategy = process.env.STRATEGY || 'unknown';
+    const issuer = process.env.USD_ISSUER || 'default';
+    const isTest = process.env.NODE_ENV === 'test';
+    const defaultLogPath = isTest
+      ? path.join(process.cwd(), 'data', 'app_raw.log')
+      : path.join(process.cwd(), 'data', `app_raw_${strategy}_${issuer}.log`);
+    this.logPath = logFilePath || defaultLogPath;
   }
 
   /**

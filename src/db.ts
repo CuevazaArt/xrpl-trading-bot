@@ -2,6 +2,7 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import path from 'path';
 import { createLogger } from './logger.js';
+import { config } from './config.js';
 
 const log = createLogger('Database');
 
@@ -34,7 +35,10 @@ export class JSONDatabase {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    this.dbPath = path.join(dir, 'db.json');
+    const strategy = config.strategy || 'unknown';
+    const issuer = config.usdIssuer || 'default';
+    const isTest = process.env.NODE_ENV === 'test';
+    this.dbPath = isTest ? path.join(dir, 'db.json') : path.join(dir, `db_${strategy}_${issuer}.json`);
 
     // Inicializar los datos (lectura síncrona solo en el arranque)
     if (fs.existsSync(this.dbPath)) {

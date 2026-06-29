@@ -92,12 +92,21 @@ const MODULE_SHORT: Record<string, string> = {
   'Main': 'Main',
 };
 
+import dotenv from 'dotenv';
+
+// Cargar env para que estén disponibles inmediatamente
+dotenv.config();
+
 // Log file setup — async writes + rotation
 const logDir = path.join(process.cwd(), 'data');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
-const logFilePath = path.join(logDir, 'app_raw.log');
+const strategy = process.env.STRATEGY || 'unknown';
+const issuer = process.env.USD_ISSUER || 'default';
+const isTest = process.env.NODE_ENV === 'test';
+const logFileName = isTest ? 'app_raw.log' : `app_raw_${strategy}_${issuer}.log`;
+const logFilePath = path.join(logDir, logFileName);
 
 // Rotation config
 const MAX_LOG_SIZE_BYTES = 5 * 1024 * 1024; // 5MB per file
