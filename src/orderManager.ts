@@ -126,4 +126,11 @@ export class XRPLOrderManager {
 
     return this.submitTransaction(wallet, txJSON);
   }
+
+  /**
+   * Envía cualquier transacción firmada de forma segura a través del gestor.
+   */
+  async submitGeneric(wallet: Wallet, txJSON: SubmittableTransaction) {
+    return this.submitTransaction(wallet, txJSON);
+  }
 }

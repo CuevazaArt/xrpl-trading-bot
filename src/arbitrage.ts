@@ -2,6 +2,7 @@ import { Client, Wallet, Payment } from 'xrpl';
 import { config } from './config.js';
 import { createLogger } from './logger.js';
 import { db } from './db.js';
+import { XRPLOrderManager } from './orderManager.js';
 
 const log = createLogger('ArbitrageScanner');
 
@@ -9,14 +10,14 @@ const log = createLogger('ArbitrageScanner');
  * Inicia el escáner de arbitraje atómico en el mismo proceso y cliente
  * compartido con el bot principal, evitando colisiones de secuencia.
  */
-export function startArbitrageScanner(client: Client, wallet: Wallet) {
+export function startArbitrageScanner(client: Client, wallet: Wallet, orderManager: XRPLOrderManager) {
   log.info(`Escáner de arbitraje atómico activado para: ${wallet.address}`);
 
   client.connection.on('ledgerClosed', async (ledger) => {
     log.debug(`[Arbitraje] Escaneando ledger #${ledger.ledger_index}...`);
     try {
-      await scanForUSDArbitrage(client, wallet);
-      await scanForXRPArbitrage(client, wallet);
+      await scanForUSDArbitrage(client, wallet, orderManager);
+      await scanForXRPArbitrage(client, wallet, orderManager);
     } catch (error) {
       log.error('Error durante el escaneo de arbitraje:', error);
     }
@@ -26,7 +27,7 @@ export function startArbitrageScanner(client: Client, wallet: Wallet) {
 /**
  * Escanea ciclos de USD: Enviar menos de X USD para recibir exactamente X USD.
  */
-async function scanForUSDArbitrage(client: Client, wallet: Wallet) {
+async function scanForUSDArbitrage(client: Client, wallet: Wallet, orderManager: XRPLOrderManager) {
   const targetAmountUSD = '50.00';
   const usdIssuer = config.usdIssuer;
 
@@ -61,7 +62,7 @@ async function scanForUSDArbitrage(client: Client, wallet: Wallet) {
         if (profit > minProfit) {
           log.info(`¡Oportunidad de Arbitraje USD! Costo: ${costUSD.toFixed(4)} USD | Retorno: ${targetUSD.toFixed(4)} USD | Beneficio: +${profit.toFixed(4)} USD`);
           
-          await executeAtomicArbitrage(client, wallet, {
+          await executeAtomicArbitrage(client, wallet, orderManager, {
             currency: 'USD',
             value: targetAmountUSD,
             issuer: usdIssuer
@@ -77,7 +78,7 @@ async function scanForUSDArbitrage(client: Client, wallet: Wallet) {
 /**
  * Escanea ciclos de XRP: Enviar menos de X XRP para recibir exactamente X XRP.
  */
-async function scanForXRPArbitrage(client: Client, wallet: Wallet) {
+async function scanForXRPArbitrage(client: Client, wallet: Wallet, orderManager: XRPLOrderManager) {
   const targetAmountXRP = '100000000'; // 100 XRP en drops
   
   try {
@@ -111,7 +112,7 @@ async function scanForXRPArbitrage(client: Client, wallet: Wallet) {
 
           log.info(`¡Oportunidad de Arbitraje XRP! Costo: ${costXRP.toFixed(4)} XRP | Retorno: ${targetXRP.toFixed(4)} XRP | Beneficio: +${profitXRP.toFixed(4)} XRP`);
 
-          await executeAtomicArbitrage(client, wallet, targetAmountXRP, alt.source_amount, alt.paths_computed);
+          await executeAtomicArbitrage(client, wallet, orderManager, targetAmountXRP, alt.source_amount, alt.paths_computed);
         }
       }
     }
@@ -126,6 +127,7 @@ async function scanForXRPArbitrage(client: Client, wallet: Wallet) {
 async function executeAtomicArbitrage(
   client: Client,
   wallet: Wallet,
+  orderManager: XRPLOrderManager,
   destinationAmount: any,
   sendMaxAmount: any,
   paths: any
@@ -141,26 +143,17 @@ async function executeAtomicArbitrage(
       Paths: paths
     };
 
-    const prepared = await client.autofill(txJSON);
+    const response = await orderManager.submitGeneric(wallet, txJSON);
 
-    const maxFeeDrops = 20000;
-    if (prepared.Fee && parseInt(prepared.Fee, 10) > maxFeeDrops) {
-      log.warn(`Arbitraje cancelado: Comisión de red (${prepared.Fee} drops) excede el máximo de arbitraje (${maxFeeDrops} drops)`);
-      return;
-    }
-
-    const signed = wallet.sign(prepared);
-    const response = await client.submit(signed.tx_blob);
-    const result = response.result.engine_result;
-
-    if (result === 'tesSUCCESS' || result === 'terQUEUED') {
-      log.info(`¡Arbitraje enviado con éxito! Resultado: ${result} | Hash: ${response.result.tx_json.hash}`);
-      db.logTransaction('ARBITRAGE_EXEC', response.result.tx_json.hash || '', result, {
+    if (response.success && response.result) {
+      const result = response.result.result.engine_result;
+      log.info(`¡Arbitraje enviado con éxito! Resultado: ${result} | Hash: ${response.hash}`);
+      db.logTransaction('ARBITRAGE_EXEC', response.hash || '', result, {
         destinationAmount,
         sendMaxAmount
       });
     } else {
-      log.error(`Fallo inmediato al enviar arbitraje: ${result}`);
+      log.error(`Fallo al enviar arbitraje: ${response.error}`);
     }
   } catch (error) {
     log.error('Excepción al ejecutar transacción de arbitraje:', error);

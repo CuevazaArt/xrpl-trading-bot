@@ -3,6 +3,7 @@ import readline from 'readline';
 import { config } from './config.js';
 import { XRPLWebsocketReader } from './websocketReader.js';
 import { XRPLWalletManager } from './walletManager.js';
+import { XRPLOrderManager } from './orderManager.js';
 import { XRPLStrategyManager } from './strategyManager.js';
 import { XRPLDashboard } from './dashboard.js';
 import { XRPLTrustlineManager } from './trustlineManager.js';
@@ -253,10 +254,14 @@ async function main() {
   }
 
   // 8. Paper Trading (condicional) — inyectar PaperOrderManager
+  let orderManager: XRPLOrderManager;
   let paperOrderManager: PaperOrderManager | null = null;
   if (flags.paperTrading) {
     paperOrderManager = new PaperOrderManager(client, flags.simBalance, config.strategy);
+    orderManager = paperOrderManager;
     log.info(`📝 Modo Paper Trading activado. Capital simulado: $${flags.simBalance} USDT`);
+  } else {
+    orderManager = new XRPLOrderManager(client);
   }
 
   // 9. Singleton: MultiOracle compartido (evitar instancias duplicadas)
@@ -264,7 +269,7 @@ async function main() {
 
   // 10. Strategy Manager (inyectar singletons)
   const strategyManager = new XRPLStrategyManager(
-    client, wallet, walletManager, sharedOracle, dashboardProxy, paperOrderManager || undefined
+    client, wallet, walletManager, sharedOracle, dashboardProxy, orderManager, paperOrderManager || undefined
   );
 
   // Iniciar el CLI Dashboard si está activado
@@ -276,7 +281,7 @@ async function main() {
 
   // 11. Arrancar escáner de arbitraje atómico en el mismo proceso (comparte client y wallet)
   const { startArbitrageScanner } = await import('./arbitrage.js');
-  startArbitrageScanner(client, wallet);
+  startArbitrageScanner(client, wallet, orderManager);
 
   // 12. Self-Healing Watchdog — rutina integrada de auto-sanación
   const watchdog = new SelfHealingWatchdog(client, 60); // Diagnóstico cada 60s

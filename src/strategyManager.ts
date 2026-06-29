@@ -43,6 +43,7 @@ export class XRPLStrategyManager {
     walletManager: XRPLWalletManager,
     multiOracle: MultiOracle,
     dashboard: XRPLDashboard,
+    orderManager: XRPLOrderManager,
     paperOrderManager?: PaperOrderManager
   ) {
     this.client = client;
@@ -50,14 +51,12 @@ export class XRPLStrategyManager {
     this.dashboard = dashboard;
     this.multiOracle = multiOracle;
     this.walletManager = walletManager;
+    this.orderManager = orderManager;
 
     // Paper trading: inyectar PaperOrderManager en vez del real
     if (paperOrderManager) {
-      this.orderManager = paperOrderManager;
       this.paperOrderManager = paperOrderManager;
       log.info('📝 OrderManager: usando PaperOrderManager (modo simulado)');
-    } else {
-      this.orderManager = new XRPLOrderManager(client);
     }
 
     // Cargar la estrategia activa según la variable de entorno STRATEGY
