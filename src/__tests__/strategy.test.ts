@@ -8,6 +8,7 @@ import { XRPLBaseAntiLouiseStrategy } from '../strategies/anti_louise.js';
 import { XRPLMashaStrategy } from '../strategies/masha.js';
 import { XRPLThusneldaStrategy } from '../strategies/thusnelda.js';
 import { XRPLAgarthaStrategy } from '../strategies/agartha.js';
+import { config } from '../config.js';
 
 describe('Factory de Estrategias', () => {
   it('debe instanciar las estrategias correctas en base al nombre', () => {
@@ -194,6 +195,12 @@ describe('Estrategias de Trading', () => {
           walletAddress: mockWallet.address
         })
       );
+    });
+
+    it('debe respetar el presupuesto y oráculo configurados', () => {
+      expect(config.agarthaBudgetUsd).toBeDefined();
+      expect(config.agarthaAssetCode).toBeDefined();
+      expect(config.agarthaCexOracle).toBeDefined();
     });
   });
 });

@@ -45,11 +45,15 @@ export const config = {
   thusneldaMaxDrawdownPct: parseFloat(process.env.THUSNELDA_MAX_DRAWDOWN_PCT || '15.0'),
   thusneldaQuoteQty: parseFloat(process.env.THUSNELDA_QUOTE_QTY || '10.0'),
 
-  // Parámetros de Agartha
+  // Parámetros de Agartha (Volatile Asset Moonshot)
   agarthaTrailingStopPct: parseFloat(process.env.AGARTHA_TRAILING_STOP_PCT || '15.0'),
   agarthaActivationProfitPct: parseFloat(process.env.AGARTHA_ACTIVATION_PROFIT_PCT || '10.0'),
   agarthaEntryLimitOffsetPct: parseFloat(process.env.AGARTHA_ENTRY_LIMIT_OFFSET_PCT || '2.0'),
   agarthaMaxHoldingLedgers: parseInt(process.env.AGARTHA_MAX_HOLDING_LEDGERS || '1000', 10),
+  agarthaBudgetUsd: parseFloat(process.env.AGARTHA_BUDGET_USD || '100.0'),
+  agarthaAssetCode: process.env.AGARTHA_ASSET_CODE || 'FARM',
+  agarthaAssetIssuer: process.env.AGARTHA_ASSET_ISSUER || 'rMoZZVnQCdQfKMvrHmYfRW9iuwM3LTKfV6',
+  agarthaCexOracle: process.env.AGARTHA_CEX_ORACLE || 'FARMUSDT',
 
   // Parámetros comunes de DCA
   maxRungs: parseInt(process.env.MAX_RUNGS || '3', 10),
