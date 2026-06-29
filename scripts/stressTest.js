@@ -38,48 +38,54 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-console.log(`🚀 [TEST DE ESTRÉS] Lanzando ${STRATEGIES.length * ISSUERS.length} instancias en paralelo (Modo Paper Trading)...`);
+console.log(`🚀 [TEST DE ESTRÉS] Lanzando ${STRATEGIES.length * ISSUERS.length} instancias en paralelo (Modo Paper Trading) con espaciado de 350ms...`);
 
-let index = 0;
-for (const strategy of STRATEGIES) {
-  for (const issuer of ISSUERS) {
-    const instanceIndex = index++;
-    const logFile = path.join(dataDir, `stress_test_instance_${instanceIndex}.log`);
-    const logStream = fs.createWriteStream(logFile, { flags: 'w' });
+(async () => {
+  let index = 0;
+  for (const strategy of STRATEGIES) {
+    for (const issuer of ISSUERS) {
+      const instanceIndex = index++;
+      
+      // Espaciar el lanzamiento para evitar ráfagas de conexión en el nodo RPC público
+      await new Promise(resolve => setTimeout(resolve, 350));
+      
+      const logFile = path.join(dataDir, `stress_test_instance_${instanceIndex}.log`);
+      const logStream = fs.createWriteStream(logFile, { flags: 'w' });
 
-    const env = {
-      ...process.env,
-      STRATEGY: strategy,
-      USD_ISSUER: issuer,
-      DASHBOARD_PORT: String(3100 + instanceIndex),
-      LOG_LEVEL: 'INFO'
-    };
+      const env = {
+        ...process.env,
+        STRATEGY: strategy,
+        USD_ISSUER: issuer,
+        DASHBOARD_PORT: String(3100 + instanceIndex),
+        LOG_LEVEL: 'INFO'
+      };
 
-    // Launch via Node.js directly to dist/index.js
-    const child = spawn('node', ['dist/index.js', '--paper-trading', '--skip-swap', '--no-dashboard'], {
-      env,
-      stdio: ['ignore', 'pipe', 'pipe']
-    });
+      // Launch via Node.js directly to dist/index.js
+      const child = spawn('node', ['dist/index.js', '--paper-trading', '--skip-swap', '--no-dashboard'], {
+        env,
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
 
-    child.stdout.pipe(logStream);
-    child.stderr.pipe(logStream);
+      child.stdout.pipe(logStream);
+      child.stderr.pipe(logStream);
 
-    children.push({
-      child,
-      strategy,
-      issuer,
-      index: instanceIndex,
-      logFile,
-      ticks: 0,
-      orders: 0,
-      errors: 0
-    });
+      children.push({
+        child,
+        strategy,
+        issuer,
+        index: instanceIndex,
+        logFile,
+        ticks: 0,
+        orders: 0,
+        errors: 0
+      });
+    }
   }
-}
 
-console.log(`✅ [TEST DE ESTRÉS] Las 24 instancias se han lanzado con éxito.`);
-console.log(`ℹ️  Logs individuales guardados en: data/stress_test_instance_*.log`);
-console.log('📊 Monitoreando ejecución en paralelo. Presione Ctrl+C para finalizar antes de tiempo...\n');
+  console.log(`✅ [TEST DE ESTRÉS] Las 24 instancias se han lanzado con éxito.`);
+  console.log(`ℹ️  Logs individuales guardados en: data/stress_test_instance_*.log`);
+  console.log('📊 Monitoreando ejecución en paralelo. Presione Ctrl+C para finalizar antes de tiempo...\n');
+})();
 
 // Monitor logs for ticks, orders, and errors
 const monitorInterval = setInterval(() => {
