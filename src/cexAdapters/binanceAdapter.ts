@@ -2,6 +2,8 @@ import { AbstractCEXAdapter } from './AbstractCEXAdapter.js';
 import { CEXTicker, CEXOrderResult, CEXBalance } from './ICEXAdapter.js';
 import { config } from '../config.js';
 import * as crypto from 'crypto';
+import { apiFuse } from './apiFuse.js';
+import { weightGovernor } from './weightGovernor.js';
 
 export class BinanceAdapter extends AbstractCEXAdapter {
   readonly cexId = 'binance';
@@ -22,8 +24,67 @@ export class BinanceAdapter extends AbstractCEXAdapter {
     return !!(this.apiKey && this.apiSecret);
   }
 
+  /**
+   * Envoltorio seguro para fetch que implementa comprobaciones del fusible
+   * y del gobernador de pesos de Binance, además de capturar telemetría.
+   */
+  private async safeFetch(url: string, init?: RequestInit): Promise<Response> {
+    const caller = 'BinanceAdapter';
+    
+    // 1. Verificar fusible térmico (Fuse)
+    if (apiFuse.isTripped()) {
+      const remaining = apiFuse.remainingCooldownSeconds();
+      throw new Error(`[API_FUSE] Petición abortada: Fusible térmico Binance disparado. Cooldown restante: ${remaining.toFixed(1)}s.`);
+    }
+
+    // 2. Consultar Gobernador de Pesos (Weight Governor)
+    const wait = weightGovernor.requestPermission(caller);
+    if (wait === Infinity) {
+      throw new Error(`[WEIGHT_GOVERNOR] Petición bloqueada: Zona ROJA de consumo de peso en Binance (>80%).`);
+    } else if (wait > 0) {
+      await new Promise(resolve => setTimeout(resolve, wait * 1000));
+    }
+
+    // 3. Realizar petición real
+    let response: Response;
+    try {
+      response = await fetch(url, init);
+    } catch (netErr: any) {
+      throw new Error(`Error de red/conexión con Binance: ${netErr.message || netErr}`);
+    }
+
+    // 4. Capturar headers de peso de Binance
+    if (response.headers && typeof response.headers.get === 'function') {
+      const weightHeader = response.headers.get('x-mbx-used-weight-1m');
+      if (weightHeader) {
+        const weight = parseInt(weightHeader, 10);
+        if (!isNaN(weight)) {
+          weightGovernor.updateWeight(weight);
+          apiFuse.checkWeight(weight);
+        }
+      }
+    }
+
+    // 5. Capturar errores específicos de límites de peso o baneos
+    if (!response.ok) {
+      apiFuse.onErrorCode(response.status, `HTTP_${response.status}`);
+
+      try {
+        const cloned = response.clone();
+        const errJson = await cloned.json() as any;
+        if (errJson && typeof errJson.code === 'number') {
+          apiFuse.onErrorCode(errJson.code, errJson.msg || '');
+        }
+      } catch {
+        // Ignorar si no se puede parsear
+      }
+    }
+
+    return response;
+  }
+
   protected async performGetTicker(): Promise<CEXTicker | null> {
-    const response = await fetch(`${this.baseUrl}/api/v3/ticker/bookTicker?symbol=XRPUSDT`);
+    const response = await this.safeFetch(`${this.baseUrl}/api/v3/ticker/bookTicker?symbol=XRPUSDT`);
     if (!response.ok) {
       throw new Error(`Binance HTTP error: ${response.status}`);
     }
@@ -60,7 +121,7 @@ export class BinanceAdapter extends AbstractCEXAdapter {
     const signature = this.sign(queryString);
     const url = `${this.baseUrl}/api/v3/account?${queryString}&signature=${signature}`;
 
-    const response = await fetch(url, {
+    const response = await this.safeFetch(url, {
       headers: { 'X-MBX-APIKEY': this.apiKey }
     });
 
@@ -107,7 +168,7 @@ export class BinanceAdapter extends AbstractCEXAdapter {
     const signature = this.sign(queryString);
     const url = `${this.baseUrl}/api/v3/order?${queryString}&signature=${signature}`;
 
-    const response = await fetch(url, {
+    const response = await this.safeFetch(url, {
       method: 'POST',
       headers: {
         'X-MBX-APIKEY': this.apiKey,
@@ -156,10 +217,10 @@ export class BinanceAdapter extends AbstractCEXAdapter {
   }
 
   private formatQty(qty: number): string {
-    return (Math.floor(qty * 10) / 10).toFixed(1);
+    return (Math.floor(qty * 10) / 10).toFixed(1); // XRP requiere 1 decimal en Binance
   }
 
   private formatPrice(price: number): string {
-    return (Math.floor(price * 10000) / 10000).toFixed(4);
+    return (Math.floor(price * 10000) / 10000).toFixed(4); // USDT requiere 4 decimales para XRPUSDT
   }
 }

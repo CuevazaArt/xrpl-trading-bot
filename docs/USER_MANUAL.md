@@ -219,6 +219,26 @@ El dashboard muestra:
 
 ---
 
+## 🛡️ Límites y Fusibles de API CEX (Binance)
+
+Para evitar baneos de IP por parte de Binance (errores `-1003` o HTTP `429`), Helena integra dos salvaguardas avanzadas adaptadas del ecosistema Pecunator:
+
+### 1. API Fuse (Fusible Térmico de API)
+*   **Función**: Actúa como un interruptor de circuito de seguridad. Bloquea de inmediato todas las peticiones salientes a Binance si se detectan problemas de sobreconsumo o baneos eminentes.
+*   **Disparo Automático**: Se activa si el peso consumido en el último minuto (`X-MBX-USED-WEIGHT-1M`) supera el **80%** del límite oficial de Binance (4800 de 6000 puntos), o si Binance responde con códigos de error fatales como `429`, `418`, `-1003` (IP Ban temporal) o `-1015`.
+*   **Escalada Exponencial de Cooldown**: 
+    *   Primer disparo: Bloqueo de 5 minutos (300 segundos).
+    *   Disparos consecutivos (dentro de una ventana de gracia de 2 minutos tras restaurarse): El tiempo de bloqueo se duplica exponencialmente (10 min, 20 min, hasta un límite máximo de 1 hora).
+*   **Monitoreo e Interfaz**: El estado del fusible se muestra en vivo en el Dashboard Web. Si se dispara, se presentará un botón rojo **"Restablecer Fusible"** para forzar su conexión manual tras haber solucionado la causa del sobreconsumo.
+
+### 2. Weight Governor (Gobernador de Pesos de API)
+*   **Función**: Evalúa dinámicamente el peso consumido en el último minuto en cada petición REST y aplica tres zonas operativas:
+    *   🟢 **GREEN (≤50%)**: Consumo normal. No se aplican demoras.
+    *   🟡 **YELLOW (50% a 80%)**: Zona de advertencia. El gobernador introduce un retraso dinámico de **2 a 30 segundos** antes de realizar la petición HTTP para permitir que la ventana de la API de Binance se enfríe.
+    *   🔴 **RED (>80%)**: Zona de emergencia. Se bloquean todas las llamadas y se dispara el fusible.
+
+---
+
 ## 📝 Monitoreo y Logs
 
 ### Entendiendo los logs

@@ -4,6 +4,8 @@ import path from 'path';
 import { db } from './db.js';
 import { config } from './config.js';
 import { createLogger } from './logger.js';
+import { apiFuse } from './cexAdapters/apiFuse.js';
+import { weightGovernor } from './cexAdapters/weightGovernor.js';
 
 const log = createLogger('Dashboard');
 
@@ -58,9 +60,22 @@ export class XRPLDashboard {
           ...this.state,
           walletAddress: maskedAddress,
           transactions: db.getTransactions().reverse(), // Últimas primero
-          balancesHistory: db.getBalancesHistory()
+          balancesHistory: db.getBalancesHistory(),
+          apiFuse: apiFuse.getStatus(),
+          weightGovernor: weightGovernor.getStatus()
         };
         res.end(JSON.stringify(statusData));
+        return;
+      }
+
+      // 1.2 Endpoint API para resetear manualmente el fusible
+      if (req.url?.startsWith('/api/api-fuse/reset') && req.method === 'POST') {
+        apiFuse.manualReset();
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({ success: true, message: 'API Fuse restablecido manualmente.' }));
         return;
       }
 
@@ -416,6 +431,34 @@ export class XRPLDashboard {
         </div>
       </div>
 
+      <!-- Card Límites y Fusible CEX -->
+      <div class="card">
+        <h2>Límites de API CEX (Binance)</h2>
+        <div class="info-list">
+          <div class="info-row">
+            <span>Zona de Operación:</span>
+            <span id="cex-zone" style="font-weight: bold; padding: 2px 8px; border-radius: 6px; font-size: 0.9rem; background-color: rgba(0, 230, 118, 0.15); color: var(--success-color);">GREEN</span>
+          </div>
+          <div class="info-row">
+            <span>Fusible Térmico:</span>
+            <span id="cex-fuse" style="font-weight: bold; color: var(--success-color);">CONECTADO</span>
+          </div>
+          <div class="info-row">
+            <span>Peso Consumido (1m):</span>
+            <span id="cex-weight" style="font-weight: bold;">0 / 6000 (0.0%)</span>
+          </div>
+          <div class="info-row">
+            <span>Racha de Disparos:</span>
+            <span id="cex-streak" style="color: var(--text-main);">0 disparos (total: 0)</span>
+          </div>
+          <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+            <button id="resetFuseBtn" style="background: rgba(255, 23, 68, 0.1); border: 1px solid var(--error-color); color: var(--error-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: none; transition: all 0.2s;">
+              Restablecer Fusible
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Card Historial (Tabla) -->
       <div class="card history-card">
         <h2>Historial de Actividad del Bot</h2>
@@ -482,6 +525,44 @@ export class XRPLDashboard {
 
         document.getElementById('active-buy').textContent = data.activeBuySeq;
         document.getElementById('active-sell').textContent = data.activeSellSeq;
+
+        // Actualizar Binance CEX Fuse y Governor
+        if (data.apiFuse && data.weightGovernor) {
+          const zoneEl = document.getElementById('cex-zone');
+          const zone = data.weightGovernor.zone;
+          zoneEl.textContent = zone;
+          if (zone === 'GREEN') {
+            zoneEl.style.backgroundColor = 'rgba(0, 230, 118, 0.15)';
+            zoneEl.style.color = 'var(--success-color)';
+          } else if (zone === 'YELLOW') {
+            zoneEl.style.backgroundColor = 'rgba(251, 191, 36, 0.15)';
+            zoneEl.style.color = '#fbbf24';
+          } else {
+            zoneEl.style.backgroundColor = 'rgba(255, 23, 68, 0.15)';
+            zoneEl.style.color = 'var(--error-color)';
+          }
+
+          const fuseEl = document.getElementById('cex-fuse');
+          const resetBtn = document.getElementById('resetFuseBtn');
+          if (data.apiFuse.tripped) {
+            fuseEl.textContent = 'DISPARADO (' + data.apiFuse.remainingCooldownSeconds.toFixed(1) + 's)';
+            fuseEl.style.color = 'var(--error-color)';
+            resetBtn.style.display = 'block';
+          } else {
+            fuseEl.textContent = 'CONECTADO';
+            fuseEl.style.color = 'var(--success-color)';
+            resetBtn.style.display = 'none';
+          }
+
+          const weightEl = document.getElementById('cex-weight');
+          const pct = data.weightGovernor.pct;
+          weightEl.textContent = data.weightGovernor.currentWeight + ' / ' + data.weightGovernor.weightLimit + ' (' + pct.toFixed(1) + '%)';
+          if (pct >= 80) weightEl.style.color = 'var(--error-color)';
+          else if (pct >= 50) weightEl.style.color = '#fbbf24';
+          else weightEl.style.color = 'var(--text-main)';
+
+          document.getElementById('cex-streak').textContent = data.apiFuse.consecutiveStreak + ' disparos (total: ' + data.apiFuse.tripCount + ')';
+        }
 
         // Historial
         const tbody = document.getElementById('logs-body');
@@ -551,6 +632,25 @@ export class XRPLDashboard {
       if (body) body.innerHTML = '<span style="color: var(--text-muted);">Logs limpiados localmente. Volverán a aparecer al recibir nuevos eventos.</span>';
       logsCleared = true;
       setTimeout(() => { logsCleared = false; }, 3000);
+    });
+
+    document.getElementById('resetFuseBtn').addEventListener('click', async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || '';
+        const resetUrl = token ? '/api/api-fuse/reset?token=' + encodeURIComponent(token) : '/api/api-fuse/reset';
+        
+        const response = await fetch(resetUrl, { method: 'POST' });
+        const result = await response.json();
+        if (result.success) {
+          alert('Fusible restablecido con éxito.');
+          updateDashboard();
+        } else {
+          alert('Error al restablecer fusible.');
+        }
+      } catch (err) {
+        alert('Error de red: ' + (err as any).message);
+      }
     });
 
     // Actualizar cada 2 segundos

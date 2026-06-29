@@ -136,3 +136,27 @@ npm run cleanup
 * Para entender cómo funciona el creador de mercado: [`docs/instances/001_helena_kyoto_sashimi.md`](file:///c:/Users/Dell/Desktop/xrpl-trading-bot/docs/instances/001_helena_kyoto_sashimi.md)
 * Para entender la estrategia de acumulación: [`docs/DOROTHY_STRATEGY.md`](file:///c:/Users/Dell/Desktop/xrpl-trading-bot/docs/DOROTHY_STRATEGY.md)
 * Para revisar advertencias adicionales de riesgo en arbitraje: [`docs/ARBITRAGE_RISK_WARNINGS.md`](file:///c:/Users/Dell/Desktop/xrpl-trading-bot/docs/ARBITRAGE_RISK_WARNINGS.md)
+
+---
+
+## 🚨 Protocolo ante Disparo del Fusible Térmico (API Fuse)
+
+El **API Fuse** es tu salvaguarda automática contra bloqueos de IP y suspensiones de cuenta en Binance. Si se dispara, verás una alerta roja en el Dashboard Web y en los logs del bot, y todas las operaciones que involucren Binance se pausarán de forma preventiva.
+
+### Síntomas:
+- Mensajes en la terminal: `🚨 API FUSE TRIPPED (...) — LLAMADAS API REST BLOQUEADAS`
+- En el Dashboard Web, el estado del fusible pasa de `CONECTADO` (verde) a `DISPARADO` (rojo) mostrando una cuenta atrás de cooldown.
+- El botón rojo **"Restablecer Fusible"** se hace visible en el panel.
+
+### Procedimiento de Recuperación:
+1. **Mantén la calma:** El bot detiene de forma segura las consultas y transacciones hacia Binance para evitar que un baneo de IP se extienda o empeore.
+2. **Revisar estado de Binance:** Verifica si Binance está experimentando problemas técnicos de red o mantenimiento en su portal: [Binance Announcements](https://binance.com/en/support/announcement).
+3. **Revisar logs en `data/app_raw.log`**:
+   - Si ves errores `HTTP 403` o `IP Ban`, tu clave de API o tu dirección IP han sido suspendidas temporalmente por Binance.
+   - Si ves errores `HTTP 429` (Rate limit), significa que tienes demasiados procesos/instancias de Helena operando bajo la misma dirección IP pública.
+4. **Esperar restauración automática:**
+   - El fusible se restablecerá solo al finalizar la cuenta atrás.
+   - Si el fusible se reconecta e inmediatamente se vuelve a disparar, la **escalada exponencial** duplicará el tiempo de espera (5 min ➔ 10 min ➔ 20 min ➔ 1 hora) para proteger tu IP.
+5. **Restablecimiento manual:**
+   - Si ya corregiste la causa del sobreconsumo (ej. detuviste otras instancias o actualizaste las API keys), puedes hacer clic en **"Restablecer Fusible"** en el Dashboard Web para forzar su reconexión de inmediato y reanudar el trading.
+
