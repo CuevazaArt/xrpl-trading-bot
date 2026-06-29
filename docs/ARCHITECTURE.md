@@ -331,3 +331,30 @@ Para permitir el escalado a gran escala de Helena, se implementó un sistema de 
 ### 2. Lecciones Aprendidas de Test de Estrés (24 Instancias)
 - **Rate-Limiting de WebSocket**: Al levantar 24 bots simultáneos conectándose al mismo nodo de Testnet público de Ripple (`wss://s.altnet.rippletest.net:51233`) en el mismo instante, el servidor de la red aplica restricciones de puertos cerrando sockets temporalmente (`websocket was closed, threshold exceeded`).
 - **Mitigación**: Helena utiliza reconexiones asíncronas con backoff exponencial. El bot se auto-recupera reestableciendo la suscripción en el siguiente ticker sin perder consistencia. En producción, se recomienda distribuir la carga a través de múltiples nodos RPC o usar nodos dedicados/privados.
+
+---
+
+## 🔌 3. Configuración de Nodo Privado Dedicated y Costos
+
+Para entornos de alta frecuencia (HFT) o escalabilidad horizontal de múltiples cuentas y estrategias, se recomienda migrar de los nodos WebSocket públicos a un nodo dedicado o privado.
+
+### A. Requisitos de Infraestructura (Self-Hosted)
+Si se prefiere ejecutar una instancia propia del software `rippled` (vía Docker):
+- **CPU:** 4 a 8 Cores dedicados.
+- **RAM:** 16 GB a 32 GB.
+- **Almacenamiento:** SSD o NVMe rápido.
+  - *Modo Histórico Completo:* Requiere varios Terabytes.
+  - *Modo Current Validation (Recomendado):* Solo retiene los bloques recientes (~100 GB - 200 GB).
+
+### B. Proveedores SaaS (Nodos Administrados)
+Empresas de infraestructura que alquilan endpoints dedicados mediante API keys:
+- **Proveedores populares:** QuickNode, GetBlock, NowNodes, Ankr.
+
+### C. Comparativa de Costos Mensuales
+
+| Tipo de Nodo | Costo Aproximado (USD) | Recomendado Para |
+|---|:---:|---|
+| **Público (Comunidad)** | $0 / mes | Producción pequeña (1-2 bots estándar) |
+| **Self-Hosted (Servidor VPS)** | $40 - $120 / mes | Control total de latencia y configuración |
+| **SaaS API (Plan Inicial)** | $49 / mes | Estabilidad e inmunidad a ráfagas WebSocket |
+| **SaaS API (Plan Pro)** | $299 / mes | HFT extremo de muy baja latencia (<50ms) |
