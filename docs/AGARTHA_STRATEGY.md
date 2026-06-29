@@ -85,3 +85,16 @@ Cuando el Trailing Stop local se activa y dispara la señal de salida, el bot en
 
 *Nota: El supervisor humano puede forzar el cierre de una posición marcada como `stale_exit` o trabada a través del comando `cli supervisor close <bot_id>` de forma segura.*
 
+---
+
+## 🚫 Lista Negra Obligatoria de Proyectos (Anti-Scam)
+
+Para proteger el presupuesto aislado de Agartha de proyectos maliciosos o defectuosos, se integra un control de lista negra persistente y obligatorio:
+
+### 1. Detección por Filtros Automáticos
+En cada tick, antes de realizar cualquier consulta de precios o colocar órdenes, Agartha evalúa el código del activo (`AGARTHA_ASSET_CODE`). Si el nombre contiene palabras clave cínicas o vinculadas a launchpads de estafas rápidas (como `PUMP`, `FUN`, `SCAM` o `RUG`), la ejecución del tick se **aborta inmediatamente** y se reporta en el dashboard como bloqueado.
+
+### 2. Consulta y Persistencia en DB Local
+*   La lista negra se guarda en el archivo `db.json` bajo la clave `custom.agartha_blacklist`.
+*   Al arrancar, el bot carga esta lista de la DB. Si está vacía, se inicializa con los términos sospechosos por defecto (ej. launchpad especulativo de `pump.fun`).
+*   Los operadores pueden expandir la lista negra insertando registros adicionales directamente en la clave de la base de datos local para suspender la operación de emisores o tokens de forma inmediata.
