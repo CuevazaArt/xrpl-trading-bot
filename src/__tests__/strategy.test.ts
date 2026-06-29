@@ -202,5 +202,21 @@ describe('Estrategias de Trading', () => {
       expect(config.agarthaAssetCode).toBeDefined();
       expect(config.agarthaCexOracle).toBeDefined();
     });
+
+    it('debe bloquear la ejecución si el activo configurado está en la lista negra (ej: PUMP)', async () => {
+      const agartha = new XRPLAgarthaStrategy();
+      await agartha.init(mockClient, mockWallet, mockOrderManager, mockDashboard);
+
+      const originalAsset = config.agarthaAssetCode;
+      (config as any).agarthaAssetCode = 'PUMP';
+
+      mockOrderManager.createLimitOrder.mockClear();
+
+      await agartha.tick(100, 1.00);
+
+      expect(mockOrderManager.createLimitOrder).not.toHaveBeenCalled();
+
+      (config as any).agarthaAssetCode = originalAsset;
+    });
   });
 });

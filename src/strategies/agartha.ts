@@ -21,6 +21,13 @@ interface AgarthaState {
   status: 'ACTIVE' | 'STALE_EXIT';
 }
 
+interface BlacklistItem {
+  assetCode: string;
+  issuer?: string;
+  reason: string;
+  timestamp: number;
+}
+
 export class XRPLAgarthaStrategy extends AbstractStrategy {
   public readonly name = 'agartha';
   private state: AgarthaState = {
@@ -33,8 +40,12 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     status: 'ACTIVE'
   };
 
+  private blacklist: BlacklistItem[] = [];
+
   protected async onInit(): Promise<void> {
     this.loadState();
+    this.loadBlacklist();
+    
     this.dashboard.updateState({
       walletAddress: this.wallet.address,
       strategyName: 'Agartha Moonshot Trailing'
@@ -43,6 +54,22 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
   }
 
   async tick(currentLedger: number, marketPriceXrp: number): Promise<void> {
+    // 0. Validación de Lista Negra Obligatoria
+    if (this.checkBlacklist(config.agarthaAssetCode, config.agarthaAssetIssuer)) {
+      this.log.error(`[AGARTHA] 🚨 OPERACIÓN BLOQUEADA: El activo ${config.agarthaAssetCode} está en la LISTA NEGRA de proyectos fraudulentos/defectuosos (ej: pump.fun).`);
+      await this.updateDashboardWithBalances({
+        midPrice: '0',
+        buyTarget: 'BLOQUEADO (Lista Negra)',
+        sellTarget: 'BLOQUEADO (Lista Negra)',
+        activeBuySeq: 'Ninguna',
+        activeSellSeq: 'Ninguna',
+        strategyName: 'Agartha Moonshot',
+        activeRungs: '0 / 0',
+        botStatus: `🚨 BLOQUEADO: ${config.agarthaAssetCode} está en la Lista Negra!`
+      });
+      return;
+    }
+
     // 1. Obtener precio del activo volátil desde el oráculo CEX de alta velocidad (Binance)
     const assetPrice = await this.fetchAssetPrice();
     if (assetPrice <= 0) {
@@ -60,7 +87,7 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
       return;
     }
 
-    // Gestionar posición abierta
+    // Gestionar posición activa
     if (this.state.positionSize > 0) {
       // Si ya hay un proceso de salida activo (orden de venta enviada), evaluar timeouts de re-quote
       if (this.state.sellSequence) {
@@ -112,6 +139,21 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
 
   async cleanup(): Promise<void> {
     this.log.info('Cleanup: Agartha manteniendo estructuras de trailing activas.');
+  }
+
+  private checkBlacklist(assetCode: string, issuer?: string): boolean {
+    const codeUpper = assetCode.toUpperCase();
+    
+    // 1. Detección automática por palabras clave cínicas o sospechosas (ej. pump.fun)
+    if (codeUpper.includes('PUMP') || codeUpper.includes('FUN') || codeUpper.includes('SCAM') || codeUpper.includes('RUG')) {
+      return true;
+    }
+    
+    // 2. Consulta en la lista negra persistida en base de datos
+    return this.blacklist.some(item => 
+      item.assetCode.toUpperCase() === codeUpper && 
+      (!item.issuer || item.issuer === issuer)
+    );
   }
 
   private async syncBuyLimitOrder(currentPrice: number) {
@@ -319,6 +361,22 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     } catch (error) {
       this.log.warn(`Agartha: Error obteniendo precio de ${config.agarthaCexOracle}:`, (error as any).message);
       return 0;
+    }
+  }
+
+  private loadBlacklist() {
+    const saved = db.getCustomData('agartha_blacklist') as BlacklistItem[];
+    if (saved && Array.isArray(saved)) {
+      this.blacklist = saved;
+    } else {
+      // Inicializar con valores fraudulentos por defecto (ej: pump.fun)
+      this.blacklist = [
+        { assetCode: 'PUMP', reason: 'Token originado en launchpad especulativo pump.fun', timestamp: Date.now() },
+        { assetCode: 'FUN', reason: 'Token originado en launchpad especulativo pump.fun', timestamp: Date.now() },
+        { assetCode: 'SCAM', reason: 'Token fraudulento confirmado', timestamp: Date.now() },
+        { assetCode: 'RUG', reason: 'Token con alta sospecha de rugpull', timestamp: Date.now() }
+      ];
+      db.saveCustomData('agartha_blacklist', this.blacklist);
     }
   }
 
