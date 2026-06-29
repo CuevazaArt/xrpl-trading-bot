@@ -1,0 +1,68 @@
+# =====================================================================
+# REQUISITOS DEL SISTEMA Y ENTORNO DE DESARROLLO (Helena Bot)
+# =====================================================================
+
+Este archivo lista las dependencias del sistema y herramientas externas recomendadas para operar y extender el bot Helena.
+
+---
+
+## 1. Requisitos Obligatorios
+
+*   **Node.js**: v18.0.0 o superior (Recomendado: LTS v20+)
+    *   *Uso*: Ejecución de la lógica principal de trading, typescript compilado y scripts auxiliares.
+    *   *Instalación*: https://nodejs.org
+
+---
+
+## 2. Herramientas de Producción (Recomendado)
+
+*   **PM2 (Process Manager)**:
+    *   *Uso*: Orquestación de múltiples instancias en segundo plano (Multi-Wallet / Multi-Estrategia) sin bloquear consolas interactivas.
+    *   *Instalación global*: `npm install -g pm2`
+    *   *Uso básico*: `pm2 start ecosystem.config.cjs`
+
+---
+
+## 3. Soporte del Agente IA (Opcional - Altamente Recomendado)
+
+Para que los agentes de IA (como Antigravity, Claude Code, Aider, etc.) comprendan de forma instantánea y eficiente la estructura del proyecto y gasten menos tokens de contexto, se recomienda instalar el indexador de grafos de código local.
+
+*   **codebase-memory-mcp (Variante con Soporte Gráfico UI)**:
+    *   *Descripción*: Servidor de protocolo de contexto de modelo (MCP) que analiza el código local y lo convierte en un grafo tridimensional de relaciones.
+    *   *Instalación de la variante con UI (Gráfica)*:
+        1. Ejecuta el actualizador del indexador en tu terminal:
+           ```bash
+           codebase-memory-mcp update
+           ```
+        2. Cuando te pregunte por la variante a descargar:
+           - Selecciona la opción **`2) ui`** (MCP server + embedded graph visualization).
+        3. Esto descargará e instalará el ejecutable con el visor WebGL embebido.
+
+    *   *Configuración en tu cliente MCP (`mcp_config.json`):*
+        Asegúrate de agregar la definición del servidor en la configuración global de tu agente (`~/.gemini/config/mcp_config.json` o similar):
+        ```json
+        {
+          "mcpServers": {
+            "codebase-memory": {
+              "command": "C:\\Users\\Dell\\AppData\\Local\\Programs\\codebase-memory-mcp\\codebase-memory-mcp.exe",
+              "args": [],
+              "env": {
+                "TRIGGER_RELOAD": "1"
+              }
+            }
+          }
+        }
+        ```
+
+    *   *Ejecutar y ver el grafo tridimensional de forma gráfica y animada:*
+        Una vez instalado el binario con UI, ejecuta en tu terminal para levantar el servidor local de visualización:
+        ```bash
+        codebase-memory-mcp --ui=true
+        ```
+        Por defecto, el visor de gráficos se iniciará en tu navegador o estará disponible en:
+        👉 **http://localhost:9749**
+
+    *   *Comando manual para forzar la re-indexación:*
+        ```bash
+        codebase-memory-mcp cli index_repository "{\"repo_path\": \"c:\\Users\\Dell\\Desktop\\xrpl-trading-bot\", \"mode\": \"full\"}"
+        ```
