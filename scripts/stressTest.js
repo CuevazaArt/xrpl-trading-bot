@@ -20,7 +20,7 @@ const ISSUERS = [
   'rMinIssuer33333333333333333333333'  // Mock Issuer
 ];
 
-const RUN_DURATION_MS = 60000; // Run for 60 seconds
+const RUN_DURATION_MS = 86400000; // Run for 24 hours (or until manually stopped)
 const children = [];
 
 console.log('🚀 [TEST DE ESTRÉS] Iniciando fase de compilación...');
