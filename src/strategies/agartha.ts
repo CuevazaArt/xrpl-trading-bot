@@ -11,6 +11,14 @@ interface AgarthaState {
   buySequence?: number;
   buyLimitPrice?: number;
   ledgersInPosition: number;
+  
+  // Re-quoting locales de salida
+  sellSequence?: number;
+  sellLimitPrice?: number;
+  sellOrderTimestamp?: number;
+  hasReordered60s?: boolean;
+  hasReordered5m?: boolean;
+  status: 'ACTIVE' | 'STALE_EXIT';
 }
 
 export class XRPLAgarthaStrategy extends AbstractStrategy {
@@ -21,7 +29,8 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     entryPrice: 0,
     peakPrice: 0,
     isTrailingActive: false,
-    ledgersInPosition: 0
+    ledgersInPosition: 0,
+    status: 'ACTIVE'
   };
 
   protected async onInit(): Promise<void> {
@@ -30,7 +39,7 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
       walletAddress: this.wallet.address,
       strategyName: 'Agartha Moonshot Trailing'
     });
-    this.log.info(`Agartha initialized: asset=${config.agarthaAssetCode}, budget=$${config.agarthaBudgetUsd} USD, trailing_stop=${config.agarthaTrailingStopPct}%, activation_profit=${config.agarthaActivationProfitPct}%`);
+    this.log.info(`Agartha initialized: asset=${config.agarthaAssetCode}, qty=${config.agarthaBuyQty} units, trailing_stop=${config.agarthaTrailingStopPct}%, activation_profit=${config.agarthaActivationProfitPct}%`);
   }
 
   async tick(currentLedger: number, marketPriceXrp: number): Promise<void> {
@@ -42,8 +51,9 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     }
 
     await this.syncBuyLimitOrder(assetPrice);
+    await this.syncExitLimitOrder(assetPrice);
 
-    // Si no hay posición activa ni orden pendiente, ejecutar compra inicial
+    // Si no hay posición activa ni orden de compra pendiente, ejecutar compra inicial
     if (this.state.positionSize === 0 && !this.state.buySequence) {
       this.log.info(`Agartha: Buscando entrada en ${config.agarthaAssetCode} a precio $${assetPrice.toFixed(4)} USD...`);
       await this.placeEntry(assetPrice);
@@ -52,12 +62,19 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
 
     // Gestionar posición abierta
     if (this.state.positionSize > 0) {
+      // Si ya hay un proceso de salida activo (orden de venta enviada), evaluar timeouts de re-quote
+      if (this.state.sellSequence) {
+        await this.evaluateExitTimeouts(assetPrice);
+        await this.updateAgarthaDashboard(assetPrice);
+        return;
+      }
+
       this.state.ledgersInPosition++;
 
-      // Time Stop de seguridad
-      if (this.state.ledgersInPosition >= config.agarthaMaxHoldingLedgers) {
-        this.log.warn(`Agartha Time Stop: Posición retenida durante ${this.state.ledgersInPosition} ledgers. Liquidando...`);
-        await this.liquidatePosition(assetPrice, 'TIME_STOP');
+      // Time Stop de seguridad (solo si max holding ledgers > 0, de lo contrario corre indefinidamente)
+      if (config.agarthaMaxHoldingLedgers > 0 && this.state.ledgersInPosition >= config.agarthaMaxHoldingLedgers) {
+        this.log.warn(`Agartha Time Stop: Posición retenida durante ${this.state.ledgersInPosition} ledgers. Iniciando liquidación...`);
+        await this.startExit(assetPrice, 'TIME_STOP');
         return;
       }
 
@@ -79,8 +96,8 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
         this.log.info(`Agartha Trailing [${config.agarthaAssetCode}]: Peak=$${this.state.peakPrice.toFixed(4)} | Piso=$${trailingFloor.toFixed(4)} | Precio=$${assetPrice.toFixed(4)} | Dist=${distanceToFloorPct.toFixed(2)}%`);
 
         if (assetPrice <= trailingFloor) {
-          this.log.warn(`¡Agartha Trailing Stop gatillado! Liquidando moonshot en ${config.agarthaAssetCode}...`);
-          await this.liquidatePosition(assetPrice, 'TRAILING_EXIT');
+          this.log.warn(`¡Agartha Trailing Stop gatillado! Iniciando liquidación en ${config.agarthaAssetCode}...`);
+          await this.startExit(assetPrice, 'TRAILING_EXIT');
           return;
         }
       } else {
@@ -104,7 +121,7 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
       const activeSequences = new Set(response.result.offers?.map((offer: any) => offer.seq) || []);
       if (!activeSequences.has(this.state.buySequence)) {
         const fillPrice = this.state.buyLimitPrice || currentPrice;
-        const buyQty = config.agarthaBudgetUsd / fillPrice;
+        const buyQty = config.agarthaBuyQty;
         
         this.log.info(`Agartha: Entry-Limit llenado! (Seq: ${this.state.buySequence}, Precio: ${fillPrice})`);
         
@@ -115,6 +132,7 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
         this.state.buySequence = undefined;
         this.state.buyLimitPrice = undefined;
         this.state.ledgersInPosition = 0;
+        this.state.status = 'ACTIVE';
         this.state.epochId = `epoch_agartha_${Date.now()}`;
         
         db.logTransaction('AGARTHA_LIMIT_FILLED', '', 'FILLED', {
@@ -130,8 +148,34 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     }
   }
 
+  private async syncExitLimitOrder(currentPrice: number) {
+    if (!this.state.sellSequence) return;
+    try {
+      const response = await this.client.request({ command: 'account_offers', account: this.wallet.address });
+      const activeSequences = new Set(response.result.offers?.map((offer: any) => offer.seq) || []);
+      if (!activeSequences.has(this.state.sellSequence)) {
+        const fillPrice = this.state.sellLimitPrice || currentPrice;
+        this.log.info(`Agartha: Exit-Limit llenado! (Seq: ${this.state.sellSequence}, Precio: ${fillPrice})`);
+        
+        db.logTransaction('AGARTHA_LIQUIDATED', '', 'FILLED', {
+          asset: config.agarthaAssetCode,
+          reason: 'EXIT_ORDER_FILLED',
+          entryPrice: this.state.entryPrice,
+          exitPrice: fillPrice,
+          qty: this.state.positionSize,
+          profitUsd: this.state.positionSize * (fillPrice - this.state.entryPrice)
+        });
+
+        this.resetState();
+        this.saveState();
+      }
+    } catch (error) {
+      this.log.error('Agartha: Error al sincronizar orden de salida:', error);
+    }
+  }
+
   private async placeEntry(marketPrice: number) {
-    const buyQty = config.agarthaBudgetUsd / marketPrice;
+    const buyQty = config.agarthaBuyQty;
 
     if (config.agarthaEntryLimitOffsetPct === 0) {
       const maxBuyPrice = marketPrice * 1.01;
@@ -148,6 +192,7 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
           this.state.peakPrice = marketPrice;
           this.state.isTrailingActive = false;
           this.state.ledgersInPosition = 0;
+          this.state.status = 'ACTIVE';
           this.state.epochId = `epoch_agartha_${Date.now()}`;
           this.saveState();
           
@@ -188,40 +233,80 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     }
   }
 
-  private async liquidatePosition(currentPrice: number, reason: string) {
+  private async startExit(currentPrice: number, reason: string) {
     const qty = this.state.positionSize;
-    const minSellPrice = currentPrice * 0.99;
-    const usdCost = (qty * minSellPrice).toFixed(4);
+    const sellPrice = currentPrice * 0.99; // Límite inicial agresivo
+    const usdCost = (qty * sellPrice).toFixed(4);
     const takerPays = { currency: 'USD', value: usdCost, issuer: this.usdIssuer };
     const takerGets = { currency: config.agarthaAssetCode, value: qty.toFixed(4), issuer: config.agarthaAssetIssuer };
 
-    this.log.warn(`Agartha: Liquidando posición de ${qty.toFixed(4)} ${config.agarthaAssetCode} a $${currentPrice.toFixed(4)} USD (${reason})`);
+    this.log.warn(`Agartha: Colocando orden de salida de ${qty.toFixed(4)} ${config.agarthaAssetCode} a $${sellPrice.toFixed(4)} USD (${reason})`);
     try {
       const sellResult = await this.orderManager.createLimitOrder(this.wallet, takerPays as any, takerGets as any);
-      if (sellResult.success) {
-        db.logTransaction('AGARTHA_LIQUIDATED', sellResult.hash || '', 'tesSUCCESS', {
+      if (sellResult.success && sellResult.sequence !== undefined) {
+        this.state.sellSequence = sellResult.sequence;
+        this.state.sellLimitPrice = sellPrice;
+        this.state.sellOrderTimestamp = Date.now();
+        this.state.hasReordered60s = false;
+        this.state.hasReordered5m = false;
+        this.state.status = 'ACTIVE';
+        this.saveState();
+
+        db.logTransaction('AGARTHA_EXIT_ORDER', sellResult.hash || '', 'tesSUCCESS', {
           asset: config.agarthaAssetCode,
           reason,
-          entryPrice: this.state.entryPrice,
-          exitPrice: currentPrice,
-          qty,
-          profitUsd: qty * (currentPrice - this.state.entryPrice)
+          price: sellPrice,
+          qty
         });
-        
-        this.state = {
-          epochId: '',
-          positionSize: 0,
-          entryPrice: 0,
-          peakPrice: 0,
-          isTrailingActive: false,
-          ledgersInPosition: 0
-        };
-        this.saveState();
       } else {
-        this.log.error('Agartha: Falló la liquidación de la posición:', sellResult.error);
+        this.log.error('Agartha: Falló la colocación de la orden de salida:', sellResult.error);
       }
     } catch (error) {
-      this.log.error('Agartha: Excepción durante la liquidación:', error);
+      this.log.error('Agartha: Excepción durante la orden de salida:', error);
+    }
+  }
+
+  private async evaluateExitTimeouts(currentPrice: number) {
+    if (!this.state.sellSequence || !this.state.sellOrderTimestamp) return;
+
+    const elapsed = Date.now() - this.state.sellOrderTimestamp;
+
+    // 1. A los 60 segundos (1 min): Re-quote al bid actual
+    if (elapsed >= 60000 && !this.state.hasReordered60s) {
+      this.log.warn(`[AGARTHA] Re-quote (60s): La orden de venta no se ha llenado. Re-cotizando al precio bid actual ($${currentPrice.toFixed(4)} USD)...`);
+      await this.orderManager.cancelOrder(this.wallet, this.state.sellSequence);
+      
+      this.state.sellSequence = undefined;
+      this.saveState();
+
+      // Colocar nueva orden al bid actual
+      await this.startExit(currentPrice, 'REQUOTE_60S_BID');
+      this.state.hasReordered60s = true;
+      this.saveState();
+      return;
+    }
+
+    // 2. A los 5 minutos (300s): Re-quote al borde del trail floor
+    if (elapsed >= 300000 && !this.state.hasReordered5m) {
+      const trailBorder = this.state.peakPrice * (1 - config.agarthaTrailingStopPct / 100);
+      this.log.warn(`[AGARTHA] Re-quote (5m): La orden sigue colgada. Colocando al borde inferior del piso de trail ($${trailBorder.toFixed(4)} USD)...`);
+      await this.orderManager.cancelOrder(this.wallet, this.state.sellSequence);
+      
+      this.state.sellSequence = undefined;
+      this.saveState();
+
+      // Colocar al borde de salida
+      await this.startExit(trailBorder, 'REQUOTE_5M_BORDER');
+      this.state.hasReordered5m = true;
+      this.saveState();
+      return;
+    }
+
+    // 3. A los 10 minutos (600s): Marcar como STALE_EXIT y alertar
+    if (elapsed >= 600000 && this.state.status !== 'STALE_EXIT') {
+      this.log.error(`[AGARTHA] ALERTA CRÍTICA (10m): La orden de venta del token volátil no se llenó. Se marca como STALE_EXIT para intervención manual del supervisor.`);
+      this.state.status = 'STALE_EXIT';
+      this.saveState();
     }
   }
 
@@ -235,6 +320,23 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
       this.log.warn(`Agartha: Error obteniendo precio de ${config.agarthaCexOracle}:`, (error as any).message);
       return 0;
     }
+  }
+
+  private resetState() {
+    this.state = {
+      epochId: '',
+      positionSize: 0,
+      entryPrice: 0,
+      peakPrice: 0,
+      isTrailingActive: false,
+      ledgersInPosition: 0,
+      sellSequence: undefined,
+      sellLimitPrice: undefined,
+      sellOrderTimestamp: undefined,
+      hasReordered60s: false,
+      hasReordered5m: false,
+      status: 'ACTIVE'
+    };
   }
 
   private saveState() {
@@ -254,12 +356,12 @@ export class XRPLAgarthaStrategy extends AbstractStrategy {
     await this.updateDashboardWithBalances({
       midPrice: marketPrice.toString(),
       buyTarget: this.state.buySequence ? `Limit: ${this.state.buyLimitPrice}` : 'None',
-      sellTarget: this.state.isTrailingActive ? trailingFloor.toFixed(4) : 'Trailing Inactivo',
+      sellTarget: this.state.sellSequence ? `Venta: ${this.state.sellLimitPrice}` : (this.state.isTrailingActive ? trailingFloor.toFixed(4) : 'Trailing Inactivo'),
       activeBuySeq: this.state.buySequence ? `Buy Seq: ${this.state.buySequence}` : 'Ninguna',
-      activeSellSeq: this.state.positionSize > 0 ? `Peak: ${this.state.peakPrice.toFixed(4)}` : 'Ninguna',
+      activeSellSeq: this.state.sellSequence ? `Exit Seq: ${this.state.sellSequence}` : (this.state.positionSize > 0 ? `Peak: ${this.state.peakPrice.toFixed(4)}` : 'Ninguna'),
       strategyName: 'Agartha Moonshot',
       activeRungs: this.state.positionSize > 0 ? '1 / 1' : '0 / 1',
-      botStatus: this.state.positionSize > 0 ? `In Position (${this.state.isTrailingActive ? 'Trailing active' : 'Tracking activation'})` : 'Waiting for entry'
+      botStatus: this.state.sellSequence ? `Slippage Re-quote (Status: ${this.state.status})` : (this.state.positionSize > 0 ? `In Position (${this.state.isTrailingActive ? 'Trailing active' : 'Tracking activation'})` : 'Waiting for entry')
     });
   }
 }

@@ -51,6 +51,7 @@ export const config = {
   agarthaEntryLimitOffsetPct: parseFloat(process.env.AGARTHA_ENTRY_LIMIT_OFFSET_PCT || '2.0'),
   agarthaMaxHoldingLedgers: parseInt(process.env.AGARTHA_MAX_HOLDING_LEDGERS || '1000', 10),
   agarthaBudgetUsd: parseFloat(process.env.AGARTHA_BUDGET_USD || '100.0'),
+  agarthaBuyQty: parseFloat(process.env.AGARTHA_BUY_QTY || '10.0'),
   agarthaAssetCode: process.env.AGARTHA_ASSET_CODE || 'FARM',
   agarthaAssetIssuer: process.env.AGARTHA_ASSET_ISSUER || 'rMoZZVnQCdQfKMvrHmYfRW9iuwM3LTKfV6',
   agarthaCexOracle: process.env.AGARTHA_CEX_ORACLE || 'FARMUSDT',
