@@ -141,17 +141,31 @@ describe('Estrategias de Trading', () => {
     });
   });
 
-  describe('Masha DCA MTF', () => {
+  describe('Masha DCA Accumulator (HODL)', () => {
     it('debe inicializarse correctamente y actualizar el dashboard', async () => {
       const masha = new XRPLMashaStrategy();
       await masha.init(mockClient, mockWallet, mockOrderManager, mockDashboard);
 
       expect(mockDashboard.updateState).toHaveBeenCalledWith(
         expect.objectContaining({
-          strategyName: 'Masha Multi-Timeframe DCA',
+          strategyName: 'Masha DCA Accumulator',
           walletAddress: mockWallet.address
         })
       );
+    });
+
+    it('debe realizar la compra inicial en el primer tick y guardar estado', async () => {
+      const masha = new XRPLMashaStrategy();
+      await masha.init(mockClient, mockWallet, mockOrderManager, mockDashboard);
+      
+      // Limpiar llamadas de mock
+      mockOrderManager.createLimitOrder.mockClear();
+
+      // Tick inicial a precio de $1.00 USD
+      await masha.tick(100, 1.00);
+
+      // Debe colocar una orden de compra
+      expect(mockOrderManager.createLimitOrder).toHaveBeenCalledTimes(1);
     });
   });
 
