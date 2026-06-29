@@ -9,6 +9,7 @@ import { XRPLMashaStrategy } from '../strategies/masha.js';
 import { XRPLThusneldaStrategy } from '../strategies/thusnelda.js';
 import { XRPLAgarthaStrategy } from '../strategies/agartha.js';
 import { config } from '../config.js';
+import { db } from '../db.js';
 
 describe('Factory de Estrategias', () => {
   it('debe instanciar las estrategias correctas en base al nombre', () => {
@@ -59,6 +60,10 @@ describe('Estrategias de Trading', () => {
   let mockDashboard: any;
 
   beforeEach(() => {
+    vi.spyOn(db, 'getCustomData').mockReturnValue(null);
+    vi.spyOn(db, 'saveCustomData').mockImplementation(() => {});
+    vi.spyOn(db, 'logTransaction').mockImplementation(() => {});
+
     mockClient = {
       request: vi.fn().mockResolvedValue({
         result: { offers: [] }
