@@ -316,3 +316,18 @@ index.ts:
 
 > **Recomendación**: Crear las wallets mientras XRP está a precio bajo.
 > Si XRP sube 10×, el costo de reserva en USD sube proporcionalmente.
+
+---
+
+## 🚀 Concurrencia y Aislamiento de Recursos (Escalabilidad Horizontal)
+
+Para permitir el escalado a gran escala de Helena, se implementó un sistema de aislamiento dinámico de recursos físicos en disco para mitigar la fricción y colisiones al ejecutar múltiples procesos paralelos (concurrencia horizontal):
+
+### 1. Aislamiento Dinámico de Base de Datos y Logs
+- **Base de Datos (`JSONDatabase` / `PaperTradingDB`)**: En lugar de compartir un único archivo físico `db.json` o `paper_trades.json`, cada proceso genera su propio almacenamiento usando el sufijo de su par y estrategia: `db_${strategy}_${usdIssuer}.json` y `paper_trades_${strategy}_${usdIssuer}.json`. Esto reduce los bloqueos de escritura (`EPERM` / `ENOENT`) a cero.
+- **Archivos de Registro (`logger` / `LogMonitor`)**: Cada bot redirige su salida de logs de forma independiente a `app_raw_${strategy}_${issuer}.log`.
+- **Watchdog Checkpoints**: Los checkpoints de salud se separan de manera similar en `checkpoint_${strategy}_${issuer}.json`.
+
+### 2. Lecciones Aprendidas de Test de Estrés (24 Instancias)
+- **Rate-Limiting de WebSocket**: Al levantar 24 bots simultáneos conectándose al mismo nodo de Testnet público de Ripple (`wss://s.altnet.rippletest.net:51233`) en el mismo instante, el servidor de la red aplica restricciones de puertos cerrando sockets temporalmente (`websocket was closed, threshold exceeded`).
+- **Mitigación**: Helena utiliza reconexiones asíncronas con backoff exponencial. El bot se auto-recupera reestableciendo la suscripción en el siguiente ticker sin perder consistencia. En producción, se recomienda distribuir la carga a través de múltiples nodos RPC o usar nodos dedicados/privados.
