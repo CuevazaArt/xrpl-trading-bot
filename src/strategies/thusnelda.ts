@@ -13,7 +13,7 @@ export class XRPLThusneldaStrategy extends AbstractStrategy {
   private currentSymbolIndex = 0;
 
   protected async onInit(): Promise<void> {
-    this.symbols = config.thusneldaSymbolsCsv.split(',').map(s => s.trim().toUpperCase());
+    this.symbols = config.thusneldaSymbolsCsv.split(',').map((s: string) => s.trim().toUpperCase());
     this.loadState();
     this.dashboard.updateState({ walletAddress: this.wallet.address, strategyName: 'Thusnelda Basket DCA' });
     this.log.info(`Thusnelda initialized: symbols=[${this.symbols.join(', ')}], factor_mult=${config.thusneldaFactorMult}, meta_equity=${config.thusneldaMetaEquityUsdt} USD`);

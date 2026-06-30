@@ -69,6 +69,7 @@ function setupReconnection(client: Client, onReconnected: () => Promise<void>) {
 
 async function main() {
   log.info('Iniciando bot de trading XRPL...');
+  await db.ensureInitialized();
   printFlagsSummary(flags);
 
   // ─── VALIDACIÓN DE CONFIGURACIÓN ───
@@ -111,7 +112,7 @@ async function main() {
   }
 
   // 3. Inicializar cliente XRPL (con soporte para múltiples endpoints y reconexión automática)
-  const urls = config.xrplWsUrl.split(',').map(u => u.trim());
+  const urls = config.xrplWsUrl.split(',').map((u: string) => u.trim());
   const client = new Client(urls[0]);
   await connectWithRetry(client);
 

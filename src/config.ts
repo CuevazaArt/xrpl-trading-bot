@@ -1,11 +1,14 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { Logger, LogLevel, createLogger } from './logger.js';
+import { isMainThread, workerData } from 'worker_threads';
 
 // Cargar variables de entorno
 dotenv.config();
 
 function parseEnvConfig() {
+  const env = (!isMainThread && workerData) ? { ...globalThis.process.env, ...workerData } : globalThis.process.env;
+  const process = { env };
   return {
     xrplWsUrl: process.env.XRPL_WS_URL || 'wss://s.altnet.rippletest.net:51233',
     walletSeed: process.env.XRPL_WALLET_SEED || null,

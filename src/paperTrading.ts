@@ -1,10 +1,10 @@
 import fs from 'fs';
-import fsp from 'fs/promises';
 import path from 'path';
 import { Wallet, Amount } from 'xrpl';
 import { XRPLOrderManager } from './orderManager.js';
 import { createLogger } from './logger.js';
 import { config } from './config.js';
+import { db } from './db.js';
 
 const log = createLogger('PaperTrading');
 
@@ -76,27 +76,34 @@ interface PaperTradingData {
  * Almacena en data/paper_trades.json — independiente de db.json
  */
 class PaperTradingDB {
-  private dbPath: string;
   private data!: PaperTradingData;
-  private writeQueue: Promise<void> = Promise.resolve();
+  private dbPath?: string;
+  private isTest: boolean;
 
   constructor(initialBalance: number, strategy: string) {
-    const dir = path.join(process.cwd(), 'data');
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    const issuer = config.usdIssuer || 'default';
-    const isTest = process.env.NODE_ENV === 'test';
-    this.dbPath = isTest ? path.join(dir, 'paper_trades.json') : path.join(dir, `paper_trades_${strategy}_${issuer}.json`);
+    this.isTest = process.env.NODE_ENV === 'test';
 
-    if (fs.existsSync(this.dbPath)) {
-      try {
-        const content = fs.readFileSync(this.dbPath, 'utf8');
-        this.data = JSON.parse(content);
+    if (this.isTest) {
+      const dir = path.join(process.cwd(), 'data');
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      this.dbPath = path.join(dir, 'paper_trades.json');
+      if (fs.existsSync(this.dbPath)) {
+        try {
+          const content = fs.readFileSync(this.dbPath, 'utf8');
+          this.data = JSON.parse(content);
+          return;
+        } catch {
+          // ignore
+        }
+      }
+    } else {
+      const saved = db.getCustomData('paper_trading_state');
+      if (saved) {
+        this.data = saved;
         log.info(`Paper Trading: Restaurado (${this.data.trades.length} trades, P&L: ${this.data.portfolio.pnlUsdt >= 0 ? '+' : ''}$${this.data.portfolio.pnlUsdt.toFixed(2)})`);
         return;
-      } catch {
-        log.warn('Paper Trading DB corrupta. Reinicializando...');
       }
     }
 
@@ -300,16 +307,15 @@ class PaperTradingDB {
   }
 
   private save(): void {
-    this.writeQueue = this.writeQueue.then(async () => {
-      const tmpPath = this.dbPath + '.tmp';
+    if (this.isTest && this.dbPath) {
       try {
-        await fsp.writeFile(tmpPath, JSON.stringify(this.data, null, 2), 'utf8');
-        await fsp.rename(tmpPath, this.dbPath);
+        fs.writeFileSync(this.dbPath, JSON.stringify(this.data, null, 2), 'utf8');
       } catch (error) {
         log.error('Error guardando paper trading DB:', error);
-        try { await fsp.unlink(tmpPath); } catch { /* ignore */ }
       }
-    });
+    } else {
+      db.saveCustomData('paper_trading_state', this.data);
+    }
   }
 }
 

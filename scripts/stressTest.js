@@ -1,8 +1,32 @@
-import { spawn, execSync } from 'child_process';
+import { Worker } from 'worker_threads';
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { Wallet } from 'xrpl';
 
-// Matrix of strategies and symbol gateways
+const RUN_DURATION_MS = 86400000; // 24 horas de test
+const children = [];
+
+console.log('🚀 [TEST DE ESTRÉS] Iniciando fase de compilación de TypeScript...');
+try {
+  execSync('npm run build', { stdio: 'inherit' });
+  console.log('✅ [TEST DE ESTRÉS] Compilación completa en dist/.');
+} catch (buildErr) {
+  console.error('❌ [TEST DE ESTRÉS] Error durante la compilación:', buildErr.message);
+  process.exit(1);
+}
+
+// Cargar dinámicamente el oráculo compilado
+const { MultiOracle } = await import('../dist/multiOracle.js');
+const oracle = new MultiOracle();
+
+// Asegurar directorio data
+const dataDir = path.join(process.cwd(), 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Configurar estrategias e issuers
 const STRATEGIES = [
   'market_maker',
   'dorothy',
@@ -15,116 +39,116 @@ const STRATEGIES = [
   'arbitrage'
 ];
 
-const ISSUERS = [
-  'rvYAfWj5gh67oV6fW32ZzP3Aw4Eubs59B', // Bitstamp USD
-  'rhub8VRN42sZ34fpTCwWqBnmg3gmeqn14t', // Gatehub USD
-  'rMinIssuer33333333333333333333333'  // Mock Issuer
-];
-
-const RUN_DURATION_MS = 86400000; // Run for 24 hours (or until manually stopped)
-const children = [];
-
-console.log('🚀 [TEST DE ESTRÉS] Iniciando fase de compilación...');
-try {
-  execSync('npm run build', { stdio: 'inherit' });
-  console.log('✅ [TEST DE ESTRÉS] Compilación completa en dist/.');
-} catch (buildErr) {
-  console.error('❌ [TEST DE ESTRÉS] Error durante la compilación:', buildErr.message);
-  process.exit(1);
+// Generar 12 emisores/gateways XRPL válidos y únicos dinámicamente
+console.log('🔑 [TEST DE ESTRÉS] Generando 12 emisores XRPL base58-checksummed...');
+const ISSUERS = [];
+for (let i = 0; i < 12; i++) {
+  ISSUERS.push(Wallet.generate().address);
 }
 
-// Ensure data folder exists for logs
-const dataDir = path.join(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-console.log(`🚀 [TEST DE ESTRÉS] Lanzando ${STRATEGIES.length * ISSUERS.length} instancias en paralelo (Modo Paper Trading) con espaciado de 350ms...`);
+const TOTAL_INSTANCES = 100;
+console.log(`🚀 [TEST DE ESTRÉS] Iniciando orquestación de ${TOTAL_INSTANCES} worker_threads con espaciado de 150ms...`);
 
 (async () => {
-  let index = 0;
-  for (const strategy of STRATEGIES) {
-    for (const issuer of ISSUERS) {
-      const instanceIndex = index++;
-      
-      // Espaciar el lanzamiento para evitar ráfagas de conexión en el nodo RPC público
-      await new Promise(resolve => setTimeout(resolve, 350));
-      
-      const logFile = path.join(dataDir, `stress_test_instance_${instanceIndex}.log`);
-      const logStream = fs.createWriteStream(logFile, { flags: 'w' });
+  for (let i = 0; i < TOTAL_INSTANCES; i++) {
+    const strategy = STRATEGIES[i % STRATEGIES.length];
+    const issuer = ISSUERS[i % ISSUERS.length];
+    const instanceIndex = i;
 
-      // Balanceador de red: rotación y fallback automático entre 4 nodos públicos de prueba
-      const TESTNET_NODES = [
-        'wss://s.altnet.rippletest.net:51233',
-        'wss://testnet.xrpl-labs.com',
-        'wss://clio.altnet.rippletest.net:51233',
-        'wss://testnet.honeycluster.io'
-      ];
-      const rotatedNodes = [];
-      for (let i = 0; i < TESTNET_NODES.length; i++) {
-        rotatedNodes.push(TESTNET_NODES[(instanceIndex + i) % TESTNET_NODES.length]);
-      }
-      const nodeUrlsString = rotatedNodes.join(', ');
+    // Espaciado dinámico corto (hilos nativos son mucho más rápidos de iniciar que procesos)
+    await new Promise(resolve => setTimeout(resolve, 150));
 
-      const env = {
-        ...process.env,
-        STRATEGY: strategy,
-        USD_ISSUER: issuer,
-        XRPL_WS_URL: nodeUrlsString,
-        DASHBOARD_PORT: String(3100 + instanceIndex),
-        LOG_LEVEL: 'INFO'
-      };
+    const logFile = path.join(dataDir, `stress_test_instance_${instanceIndex}.log`);
+    const logStream = fs.createWriteStream(logFile, { flags: 'w' });
 
-      // Launch via Node.js directly to dist/index.js
-      const child = spawn('node', ['dist/index.js', '--paper-trading', '--skip-swap', '--no-dashboard'], {
-        env,
-        stdio: ['ignore', 'pipe', 'pipe']
-      });
-
-      child.stdout.pipe(logStream);
-      child.stderr.pipe(logStream);
-
-      children.push({
-        child,
-        strategy,
-        issuer,
-        index: instanceIndex,
-        logFile,
-        ticks: 0,
-        orders: 0,
-        errors: 0,
-        balance: 1000.00,
-        pnl: '+0.00%',
-        lastAction: 'Inicializando...'
-      });
+    // Rotación de nodos testnet
+    const TESTNET_NODES = [
+      'wss://s.altnet.rippletest.net:51233',
+      'wss://testnet.xrpl-labs.com',
+      'wss://clio.altnet.rippletest.net:51233',
+      'wss://testnet.honeycluster.io'
+    ];
+    const rotatedNodes = [];
+    for (let k = 0; k < TESTNET_NODES.length; k++) {
+      rotatedNodes.push(TESTNET_NODES[(instanceIndex + k) % TESTNET_NODES.length]);
     }
+    const nodeUrlsString = rotatedNodes.join(', ');
+
+    const env = {
+      STRATEGY: strategy,
+      USD_ISSUER: issuer,
+      XRPL_WS_URL: nodeUrlsString,
+      DASHBOARD_PORT: String(3100 + instanceIndex),
+      LOG_LEVEL: 'INFO',
+      PAPER_TRADING: 'true',
+      SKIP_SWAP: 'true',
+      NO_DASHBOARD: 'true'
+    };
+
+    // Lanzar worker thread nativo con captura de stdout/stderr
+    const worker = new Worker('./dist/index.js', {
+      workerData: env,
+      stdout: true,
+      stderr: true
+    });
+
+    worker.stdout.pipe(logStream);
+    worker.stderr.pipe(logStream);
+
+    children.push({
+      worker,
+      strategy,
+      issuer,
+      index: instanceIndex,
+      logFile,
+      ticks: 0,
+      orders: 0,
+      errors: 0,
+      balance: 1000.00,
+      pnl: '+0.00%',
+      lastAction: 'Inicializando...'
+    });
   }
 
-  console.log(`✅ [TEST DE ESTRÉS] Las ${children.length} instancias se han lanzado con éxito.`);
-  console.log(`ℹ️  Logs individuales guardados en: data/stress_test_instance_*.log`);
-  console.log('📊 Monitoreando ejecución en paralelo. Presione Ctrl+C para finalizar antes de tiempo...\n');
+  console.log(`✅ [TEST DE ESTRÉS] Hilos iniciados. ${children.length} instancias corriendo en paralelo.`);
+  console.log(`ℹ️  Logs individuales de hilos en: data/stress_test_instance_*.log`);
+  console.log('📊 Monitoreando ejecución en paralelo. Presione Ctrl+C para detener...\n');
 })();
 
-// Monitor logs for ticks, orders, and errors
+// Bucle de consulta unificado del oráculo (Fase A: Centralización)
+setInterval(async () => {
+  try {
+    const consensus = await oracle.getConsensusPrice();
+    if (consensus) {
+      for (const child of children) {
+        child.worker.postMessage({ type: 'price_update', consensus });
+      }
+    }
+  } catch (err) {
+    // Evitar propagar fallos de red del oráculo
+  }
+}, 2000);
+
+// Bucle del monitor MTMH (cada 5 segundos)
 const monitorInterval = setInterval(() => {
   console.clear();
   console.log('=============================================================================================================================================');
-  console.log(` 📊 MATRIZ DE TELEMETRÍA MULTIPROCESO HELENA (MTMH) — ${children.length} Instancias Concurrentes`);
+  console.log(` 📊 MATRIZ DE TELEMETRÍA MULTIPROCESO HELENA (MTMH) — ${children.length} Instancias Concurrentes (Hilos Nativos)`);
   console.log('=============================================================================================================================================');
   console.log('ID | Estrategia       | Emisor / Gateway  | Ticks | Ord | Err | Saldo Disponible | Retorno P&L | Última Acción Operativa');
   console.log('---|------------------|-------------------|-------|-----|-----|------------------|-------------|----------------------------------------');
+
+  // Mostramos solo un subset resumido en consola para evitar saturar la terminal con 100 líneas
+  const visibleSubset = children.slice(0, 30);
 
   for (const inst of children) {
     try {
       if (fs.existsSync(inst.logFile)) {
         const content = fs.readFileSync(inst.logFile, 'utf8');
-        
-        // Count events based on log messages
         inst.ticks = (content.match(/tick/gi) || []).length;
-        inst.orders = (content.match(/Compra exitosa|Venta exitosa|colocada|creada|PAPER_CEX_/gi) || []).length;
+        inst.orders = (content.match(/Compra exitosa|Venta exitosa|colocada|creada|PAPER_CEX_|Paper BUY|Paper SELL/gi) || []).length;
         inst.errors = (content.match(/error|exception|falló|crítica/gi) || []).length;
 
-        // Parsear saldo disponible y P&L de los logs
         const portfolioMatch = [...content.matchAll(/Portfolio:\s*\$([0-9.]+)\s*\(([^)]+)\)/gi)].pop();
         if (portfolioMatch) {
           inst.balance = parseFloat(portfolioMatch[1]);
@@ -136,7 +160,6 @@ const monitorInterval = setInterval(() => {
           }
         }
 
-        // Parsear última acción operativa relevante
         const actionLines = content.split('\n').filter(line => line.includes('INF') && !line.includes('Watchdog') && !line.includes('LogMonit'));
         const lastActionLine = actionLines.pop() || '';
         if (lastActionLine) {
@@ -149,9 +172,12 @@ const monitorInterval = setInterval(() => {
         }
       }
     } catch {
-      // Ignore read conflicts
+      // Ignorar bloqueos temporales de lectura
     }
+  }
 
+  // Renderizar las primeras 30
+  for (const inst of visibleSubset) {
     const idStr = String(inst.index).padStart(2, '0');
     const stratStr = inst.strategy.padEnd(16, ' ');
     const issuerStr = (inst.issuer.substring(0, 6) + '...' + inst.issuer.slice(-8)).padEnd(17, ' ');
@@ -164,10 +190,12 @@ const monitorInterval = setInterval(() => {
 
     console.log(`${idStr} | ${stratStr} | ${issuerStr} | ${tickStr} | ${orderStr} | ${errorStr} | ${balanceStr} | ${pnlStr} | ${actionStr}`);
   }
-  console.log('=============================================================================================================================================');
-  console.log(`⏱️  El test de estrés finalizará automáticamente en unos momentos.`);
 
-  // Guardar métricas en base de datos local para análisis y estudio
+  console.log('=============================================================================================================================================');
+  console.log(`... [ Mostrando las primeras 30 de ${children.length} instancias activas para evitar overflow de pantalla ] ...`);
+  console.log('=============================================================================================================================================');
+  console.log(`⏱️  El test de estrés con 100 hilos finalizará automáticamente en unas horas.`);
+
   try {
     const reportPath = path.join(dataDir, 'stress_test_live_metrics.json');
     fs.writeFileSync(reportPath, JSON.stringify({
@@ -185,44 +213,30 @@ const monitorInterval = setInterval(() => {
       }))
     }, null, 2));
   } catch (err) {
-    // Ignorar conflictos de escritura
+    // Ignorar
   }
 }, 5000);
 
-// Graceful shutdown function
 function stopAllInstances() {
   clearInterval(monitorInterval);
-  console.log('\n🛑 [TEST DE ESTRÉS] Deteniendo todas las instancias de forma elegante (SIGINT)...');
+  console.log('\n🛑 [TEST DE ESTRÉS] Finalizando los 100 worker_threads de forma segura...');
   
   for (const inst of children) {
     try {
-      inst.child.kill('SIGINT');
+      inst.worker.terminate();
     } catch (err) {
       // Ignore
     }
   }
 
-  // Allow 5 seconds for clean cancel-before-exit and shutdown before hard kill
-  setTimeout(() => {
-    console.log('🧹 [TEST DE ESTRÉS] Realizando limpieza de procesos...');
-    for (const inst of children) {
-      try {
-        inst.child.kill('SIGKILL');
-      } catch (err) {
-        // Ignore
-      }
-    }
-    console.log('🏁 [TEST DE ESTRÉS] Test finalizado correctamente.');
-    process.exit(0);
-  }, 5000);
+  console.log('🏁 [TEST DE ESTRÉS] Test de 100 hilos detenido correctamente.');
+  process.exit(0);
 }
 
-// Setup timeout for automated termination
 const timeout = setTimeout(() => {
   stopAllInstances();
 }, RUN_DURATION_MS);
 
-// Capture terminal signals
 process.on('SIGINT', () => {
   clearTimeout(timeout);
   stopAllInstances();

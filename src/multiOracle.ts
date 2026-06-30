@@ -1,7 +1,18 @@
 import { createLogger } from './logger.js';
 import { config } from './config.js';
+import { isMainThread, parentPort } from 'worker_threads';
 
 const log = createLogger('MultiOracle');
+
+let latestConsensusFromParent: ConsensusPrice | null = null;
+
+if (!isMainThread && parentPort) {
+  parentPort.on('message', (msg) => {
+    if (msg && msg.type === 'price_update') {
+      latestConsensusFromParent = msg.consensus;
+    }
+  });
+}
 
 // =====================================================================
 // TIPOS PÚBLICOS
@@ -134,6 +145,9 @@ export class MultiOracle {
    * Retorna null si no hay suficientes fuentes concordantes.
    */
   async getConsensusPrice(): Promise<ConsensusPrice | null> {
+    if (!isMainThread) {
+      return latestConsensusFromParent;
+    }
     const now = Date.now();
 
     // 1. Retornar desde caché si es válido

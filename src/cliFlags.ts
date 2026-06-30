@@ -1,4 +1,5 @@
 import { createLogger, Logger, LogLevel } from './logger.js';
+import { isMainThread, workerData } from 'worker_threads';
 
 const log = createLogger('CLI');
 
@@ -57,6 +58,15 @@ export function parseFlags(argv: string[] = process.argv.slice(2)): CLIFlags {
     skipSwap: false,
     manualUsd: null,
   };
+
+  if (!isMainThread && workerData) {
+    if (workerData.PAPER_TRADING === 'true') flags.paperTrading = true;
+    if (workerData.SKIP_SWAP === 'true') flags.skipSwap = true;
+    if (workerData.NO_DASHBOARD === 'true') flags.noDashboard = true;
+    if (workerData.SIM_BALANCE) flags.simBalance = parseFloat(workerData.SIM_BALANCE) || 1000;
+    if (workerData.MANUAL_USD) flags.manualUsd = parseFloat(workerData.MANUAL_USD) || 0;
+    return flags;
+  }
 
   for (const arg of argv) {
     const [key, value] = arg.split('=');
