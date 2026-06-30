@@ -54,6 +54,13 @@
 - **Dónde**: Definición conceptual del sistema.
 - **Regla**: El bot en su totalidad se denomina **Helena**. El arbitraje (representado por la estrategia `arbitrage`) es el núcleo definitorio y la razón de ser del sistema. Toda instancia configurada para ejecutar arbitraje atómico representa la ejecución pura de Helena y tiene prioridad máxima en la asignación de canales de WebSocket y balance de recursos.
 
+### 12. Doctrina de Trading Helena
+- **Dónde**: Definición filosófica y de riesgos.
+- **Regla**: Helena adopta los tres pilares doctrinales de Pecunator:
+  1. *Soberanía Operativa*: El operador mantiene el control absoluto de los fondos y de las decisiones técnicas.
+  2. *Cobertura Simétrica*: Coexistencia coordinada de estrategias alcistas y bajistas para neutralizar riesgos direccionales.
+  3. *Gestión de Pérdidas*: Distinción clara entre pérdidas *justas* (aceptables y normales de la estrategia) e *injustas* (errores de código, falta de colateral o fallas operativas). Ante pérdidas injustas, detener la ejecución de inmediato y degradar a paper trading para diagnóstico.
+
 ---
 
 ## ❌ Antipatrones Conocidos (Evitar / Corregir)
