@@ -32,6 +32,10 @@ Este documento recopila las mejores prácticas (patrones) y errores comunes a ev
 *   **Problema:** Colocar órdenes sin saldo suficiente de XRP libre provoca errores de tipo `tecINSUFFICIENT_RESERVE` en la red XRPL, malgastando drops de comisión de red inútilmente.
 *   **Solución (Patrón):** Antes de cada tick, calcular la reserva oficial del ledger (reserva de cuenta + reserva por objeto activo) más un buffer de seguridad (ej. 10 XRP). Si el balance libre no es suficiente, saltar el tick de trading.
 
+### 5. Pool y Rotación de Endpoints WebSocket (Balanceo de Red)
+*   **Problema:** Levantamiento de múltiples instancias concurrentes (como en tests de estrés con 24 bots) saturando los límites de conexión WebSocket por IP de un solo nodo público de XRPL, resultando en desconexiones inmediatas (`code: 1008`).
+*   **Solución (Patrón):** Implementar un pool de múltiples endpoints RPC públicos válidos y pasar una lista rotada de dichos nodos a cada proceso de estrategia. Esto asegura que la carga inicial se distribuya uniformemente entre los servidores disponibles y provee una ruta de fallback redundante para reconexiones.
+
 ---
 
 ## ⚠️ Antipatrones a Evitar (Malas Prácticas)
@@ -40,7 +44,11 @@ Este documento recopila las mejores prácticas (patrones) y errores comunes a ev
 *   **Problema:** Dejar que fallas de red durante la preparación de la transacción (`autofill`) o el envío y espera (`submitAndWait`) propaguen excepciones asíncronas hacia las estrategias. Esto interrumpe el ciclo de ejecución del tick y puede tumbar el proceso de Node.js.
 *   **Solución correctiva:** Capturar robustamente las excepciones en el `OrderManager` y devolver un objeto de estado controlado `{ success: false, error: error.message }` para que la estrategia pueda gestionarlo y continuar el ciclo en el siguiente ledger.
 
-### 2. Edición Directa de Base de Datos en Caliente desde el Exterior
+### 2. Asunción de Soporte de Arrays en Constructores de SDK
+*   **Problema:** Pasar arrays o listas separadas por comas directamente a constructores de SDKs (ej: `new Client(urls)`) asumiendo que el SDK realiza failover automático nativo, lo cual provoca excepciones fatales de validación (`ValidationError`).
+*   **Solución correctiva:** Parsear siempre las cadenas de configuración complejas en arrays en la capa de inicialización del bot (ej. en `src/index.ts`) y seleccionar estrictamente el primer endpoint válido de forma síncrona, dejando el fallback en manos de los reintentos manuales de conexión y el backoff exponencial.
+
+### 3. Edición Directa de Base de Datos en Caliente desde el Exterior
 *   **Problema:** Modificar o borrar el archivo `data/db.json` mientras el bot está ejecutándose.
 *   **Solución correctiva:** Dado que el bot mantiene el estado de la base de datos en memoria antes de escribirlo de forma asíncrona, cualquier cambio al archivo externo será sobrescrito en el siguiente tick del bot. **El bot debe detenerse por completo antes de limpiar o alterar la base de datos.**
 

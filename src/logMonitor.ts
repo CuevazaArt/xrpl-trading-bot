@@ -120,6 +120,9 @@ export class LogMonitor {
 
     const [, level, module, message] = errorMatch;
 
+    // Evitar bucle de retroalimentación infinita ignorando trazas del propio LogMonitor
+    if (module === 'LogMonitor' || module === 'LogMonit') return;
+
     if (level === 'ERR' || level === 'WRN') {
       const errorKey = `${level}:${module}:${message}`;
       const now = Date.now();

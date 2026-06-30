@@ -50,6 +50,10 @@
 - **Dónde**: `config.ts` → `usdIssuer` desde `.env`
 - **Regla**: NUNCA hardcodear direcciones de emisores. Siempre resolverlos desde `config.ts`.
 
+### 11. Identidad de Helena (El Arbitraje como Núcleo)
+- **Dónde**: Definición conceptual del sistema.
+- **Regla**: El bot en su totalidad se denomina **Helena**. El arbitraje (representado por la estrategia `arbitrage`) es el núcleo definitorio y la razón de ser del sistema. Toda instancia configurada para ejecutar arbitraje atómico representa la ejecución pura de Helena y tiene prioridad máxima en la asignación de canales de WebSocket y balance de recursos.
+
 ---
 
 ## ❌ Antipatrones Conocidos (Evitar / Corregir)

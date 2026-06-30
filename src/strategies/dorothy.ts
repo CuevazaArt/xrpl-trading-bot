@@ -43,14 +43,14 @@ export class XRPLDorothyStrategy extends AbstractStrategy {
     const { trendOk, entryOk, candleOpen1h } = await this.checkTrendGates(marketPrice);
     
     const activeRungs = this.rungs.filter(r => r.status === 'ACTIVE').length;
-    this.log.info(`Dorothy Estado: Rungs Activos = ${activeRungs}/${config.maxRungs} | Precio Mercado = ${marketPrice.toFixed(4)} USD`);
-    this.log.info(`Dorothy Compuertas: Tendencia (Alcista) = ${trendOk ? 'OPEN' : 'BLOCKED'} | Entrada (Bajo Apertura 1h: ${candleOpen1h.toFixed(4)}) = ${entryOk ? 'OPEN' : 'BLOCKED'}`);
+    this.log.debug(`Dorothy Estado: Rungs Activos = ${activeRungs}/${config.maxRungs} | Precio Mercado = ${marketPrice.toFixed(4)} USD`);
+    this.log.debug(`Dorothy Compuertas: Tendencia (Alcista) = ${trendOk ? 'OPEN' : 'BLOCKED'} | Entrada (Bajo Apertura 1h: ${candleOpen1h.toFixed(4)}) = ${entryOk ? 'OPEN' : 'BLOCKED'}`);
 
     const statusText = `Tendencia: ${trendOk ? 'ALCISTA' : 'BAJISTA'} | Entrada: ${entryOk ? 'OK' : 'BLOCKED'}`;
     await this.updateDorothyDashboard(marketPrice, activeRungs, statusText);
 
     if (!trendOk || !entryOk) {
-      this.log.info('Ciclo de compra omitido por compuertas de tendencia/entrada.');
+      this.log.debug('Ciclo de compra omitido por compuertas de tendencia/entrada.');
       return;
     }
 

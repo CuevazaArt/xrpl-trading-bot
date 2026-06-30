@@ -28,13 +28,13 @@ export class XRPLElphabaStrategy extends AbstractStrategy {
     const { trendOk, entryOk, candleOpen1h } = await this.checkTrendGates(marketPrice);
     
     const activeRungs = this.rungs.filter(r => r.status === 'ACTIVE').length;
-    this.log.info(`Elphaba Estado: Rungs Activos = ${activeRungs}/${config.maxRungs} | Precio Mercado = ${marketPrice.toFixed(4)} USD`);
-    this.log.info(`Elphaba Compuertas: Tendencia (Bajista) = ${trendOk ? 'OPEN' : 'BLOCKED'} | Entrada (Sobre Apertura 1h: ${candleOpen1h.toFixed(4)}) = ${entryOk ? 'OPEN' : 'BLOCKED'}`);
+    this.log.debug(`Elphaba Estado: Rungs Activos = ${activeRungs}/${config.maxRungs} | Precio Mercado = ${marketPrice.toFixed(4)} USD`);
+    this.log.debug(`Elphaba Compuertas: Tendencia (Bajista) = ${trendOk ? 'OPEN' : 'BLOCKED'} | Entrada (Sobre Apertura 1h: ${candleOpen1h.toFixed(4)}) = ${entryOk ? 'OPEN' : 'BLOCKED'}`);
 
     const statusText = `Tendencia: ${trendOk ? 'BAJISTA' : 'ALCISTA'} | Entrada: ${entryOk ? 'OK' : 'BLOCKED'}`;
     await this.updateElphabaDashboard(marketPrice, activeRungs, statusText);
 
-    if (!trendOk || !entryOk) { this.log.info('Ciclo de venta en corto omitido.'); return; }
+    if (!trendOk || !entryOk) { this.log.debug('Ciclo de venta en corto omitido.'); return; }
 
     let shouldSell = false;
     const activeRungList = this.rungs.filter(r => r.status === 'ACTIVE');

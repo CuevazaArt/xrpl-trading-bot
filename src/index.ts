@@ -112,7 +112,7 @@ async function main() {
 
   // 3. Inicializar cliente XRPL (con soporte para múltiples endpoints y reconexión automática)
   const urls = config.xrplWsUrl.split(',').map(u => u.trim());
-  const client = new Client((urls.length > 1 ? urls : urls[0]) as any);
+  const client = new Client(urls[0]);
   await connectWithRetry(client);
 
   // 4. Inicializar Wallet Manager — intentar vault primero, fallback a .env
