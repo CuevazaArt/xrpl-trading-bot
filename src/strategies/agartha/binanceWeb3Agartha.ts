@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { BinanceWeb3Client, Web3QuoteResponse } from '../../cexAdapters/binanceWeb3Client.js';
@@ -198,6 +199,62 @@ export class BinanceWeb3AgarthaStrategy {
   }
 
   /**
+   * Escanea la seguridad del token en DeFi (Honeypot, Taxes, Scam) antes de comprar.
+   */
+  private async performSecurityAudit(tokenAddress: string): Promise<boolean> {
+    const binanceChainId = this.config.chainId === 'solana' ? 'CT_501' : this.config.chainId;
+    const url = 'https://web3.binance.com/bapi/defi/v1/public/wallet-direct/security/token/audit';
+    const requestId = crypto.randomUUID ? crypto.randomUUID() : 'd6727c70-de6c-4fad-b1d7-c05422d5f26b';
+    
+    const payload = {
+      binanceChainId,
+      contractAddress: tokenAddress,
+      requestId
+    };
+
+    try {
+      log.info(`[Audit] Iniciando escaneo de seguridad on-chain para ${tokenAddress}...`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Encoding': 'identity',
+          'User-Agent': 'binance-web3/1.4 (Skill)'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const resJson = await response.json() as any;
+      if (resJson && resJson.success && resJson.data) {
+        const audit = resJson.data;
+        if (audit.hasResult && audit.isSupported) {
+          const riskLevel = audit.riskLevel ?? 0;
+          const riskEnum = audit.riskLevelEnum || 'UNKNOWN';
+          const buyTax = audit.extraInfo?.buyTax || '0';
+          const sellTax = audit.extraInfo?.sellTax || '0';
+          
+          log.info(`[Audit] Resultado: Nivel de Riesgo = ${riskEnum} (${riskLevel}) | Impuestos: Compra=${buyTax}%, Venta=${sellTax}%`);
+          
+          if (riskLevel >= 4) {
+            log.error(`🚨 [Audit] Escaneo ABORTÓ la operación: Nivel de riesgo CRÍTICO (${riskEnum}) detectado.`);
+            return false;
+          }
+          
+          const buyTaxNum = parseFloat(buyTax);
+          const sellTaxNum = parseFloat(sellTax);
+          if (buyTaxNum > 10 || sellTaxNum > 10) {
+            log.error(`🚨 [Audit] Escaneo ABORTÓ la operación: Impuestos abusivos (Compra: ${buyTax}%, Venta: ${sellTax}%).`);
+            return false;
+          }
+        }
+      }
+    } catch (auditErr: any) {
+      log.error(`[Audit] No se pudo completar el escaneo (error de red o API): ${auditErr.message}`);
+    }
+    return true;
+  }
+
+  /**
    * Ejecuta el swap de entrada (Quote Asset -> Alpha Token).
    */
   private async executeEntryBuy(symbol: string, tokenAddress: string, currentPrice: number) {
@@ -205,6 +262,15 @@ export class BinanceWeb3AgarthaStrategy {
     state.buyState = 'LIQUIDATING';
 
     try {
+      // 1. Auditoría de Seguridad Pre-Trade (Anti-Scam / Honeypot Check)
+      const isSafe = await this.performSecurityAudit(tokenAddress);
+      if (!isSafe) {
+        state.buyState = 'WAITING_FOR_TRIGGER';
+        state.minPriceSinceTracking = currentPrice;
+        this.saveState();
+        return;
+      }
+
       const quoteBalance = await this.getOnChainBalance(this.config.quoteAssetAddress);
       if (quoteBalance < this.config.notionalAmount) {
         log.error(`[DeFi ${symbol}] Compra abortada: Caja insuficiente en la red DeFi (${quoteBalance.toFixed(2)} ${this.config.quoteAssetSymbol} disponible).`);
