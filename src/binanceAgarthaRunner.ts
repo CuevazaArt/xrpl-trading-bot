@@ -55,7 +55,6 @@ async function main() {
     trailingEntryPct: parseFloat(process.env.AGARTHA_TRAILING_ENTRY_PCT || '2.0'),
     trailingExitPct: parseFloat(process.env.AGARTHA_TRAILING_EXIT_PCT || '3.0'),
     activationProfitPct: parseFloat(process.env.AGARTHA_ACTIVATION_PROFIT_PCT || '10.0'),
-    minProfitPct: parseFloat(process.env.AGARTHA_MIN_PROFIT_PCT || '1.5'),
     maxHoldingMinutes: parseInt(process.env.AGARTHA_MAX_HOLDING_MINUTES || '60', 10),
     maxConcurrentPositions: parseInt(process.env.AGARTHA_MAX_CONCURRENT_POSITIONS || '20', 10)
   };
@@ -67,7 +66,6 @@ async function main() {
   log.info(`  - Trailing Entry: ${config.trailingEntryPct}% (Rebote desde mínimos)`);
   log.info(`  - Trailing Exit: ${config.trailingExitPct}% (Caída desde máximos)`);
   log.info(`  - Activación Trailing: ${config.activationProfitPct}% (Ganancia para activar rastreo)`);
-  log.info(`  - Ganancia Mínima: ${config.minProfitPct}%`);
   log.info(`  - Time Stop: ${config.maxHoldingMinutes} minutos`);
 
   // 4. Instanciar e inicializar estrategia

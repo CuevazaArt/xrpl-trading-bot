@@ -27,6 +27,10 @@ Este documento compila el conocimiento de resiliencia, restricciones de red y ge
 *   **Contexto**: Reintentar una orden de compra o venta tras un timeout o fallo de red REST 5xx puede duplicar la orden en el exchange.
 *   **Patrón**: Asignar un `client_order_id` único y determinista a la transacción en la DB local antes de enviarla. Si la red se cae, el bot puede consultar el estado exacto de la orden (`query_order`) utilizando ese ID único en el siguiente ciclo o reconcile boot para confirmar si entró al motor del exchange.
 
+### 5. Tesis Pura de Trailing en Símbolos Alpha (Asimetría Positiva)
+*   **Contexto**: Los activos del catálogo Alpha de Binance tienen altísima volatilidad.
+*   **Patrón**: La estrategia debe depender exclusivamente del trailing stop dinámico desde el pico (`trailingExitPct`) y de un limitador temporal (`maxHoldingMinutes`). No se deben incorporar restricciones adicionales de ganancias mínimas (`minProfitPct`), stop loss fijos o lógicas de break-even. El bot asume y compensa pequeñas pérdidas potenciales con las ganancias masivas y asimétricas capturadas en los grandes "pumpeos".
+
 ---
 
 ## ─── ANTIPATRONES OPERACIONALES (ERRORES A EVITAR) ───
@@ -46,3 +50,8 @@ Este documento compila el conocimiento de resiliencia, restricciones de red y ge
 ### 4. ❌ Evaluación y logs en ticks redundantes al límite de exposición
 *   **Antipatrón**: Continuar consultando y logueando evaluaciones de compra de nuevos activos cuando el límite de posiciones (`AGARTHA_MAX_CONCURRENT_POSITIONS`) ya está lleno.
 *   **Impacto**: Desperdicio de CPU y consumo innecesario de peso de API de Binance. El bot debe omitir las ramas de entrada de nuevos símbolos en cuanto alcance su límite de posiciones.
+
+### 5. ❌ Introducción de Umbrales de Ganancia Mínima (`minProfitPct`) o Stop Loss Estáticos
+*   **Antipatrón**: Configurar un valor de ganancia mínima (`minProfitPct`) para filtrar o bloquear el disparo del trailing stop.
+*   **Impacto**: Si el trailing stop se activa a un porcentaje de ganancia relativamente bajo (ej. $+1.5\%$) y el precio retrocede, la ganancia en el piso de salida puede caer por debajo del umbral mínimo de profit. Al bloquear la salida, el bot mantiene la posición abierta perdiendo dinero indefinidamente en lugar de liquidar. Además, el uso de stop loss estáticos en mercados ultra-volátiles Alpha gatilla pérdidas frecuentes antes de que los activos inicien su fase de pumpeo.
+

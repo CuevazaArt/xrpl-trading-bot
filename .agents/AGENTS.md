@@ -16,6 +16,7 @@
 - **Cooldown Enforcement:** All strategies must respect a minimum cooldown between order placement cycles to avoid flooding the network.
 - **Tick Safety:** Strategy ticks should be wrapped with a timeout guard to prevent indefinite hangs from unresponsive RPC calls.
 - **CEX Spot Trading Fees (Asset Deduction):** On centralized exchanges (like Binance), buying an asset often incurs a trading fee (e.g. 0.1%) deducted directly from the purchased asset itself. This results in a slightly smaller wallet balance than the filled order quantity. When placing sell orders (e.g., Trailing Exit or Stop Loss), always query the actual free balance of the token first and execute the minimum of the expected position size and the actual balance (`Math.min(positionQty, freeAsset)`) to avoid `insufficient balance` errors.
+- **Agartha Pure Trailing Thesis (No Stop Loss, No Break-Even, No Min Profit):** The Agartha strategy is designed exclusively to capture large, asymmetric pumps in high-volatility Alpha tokens. Under no circumstances should a Stop Loss, Break-Even logic, or Minimum Profit barrier (`minProfitPct`) be implemented, as they sabotage the bot's ability to ride a pump and result in logical conflicts with trailing stops. Small losses are expected and compensated by large trailing exit captures.
 
 ## Architecture Reference
 - See `docs/ARCHITECTURE.md` for full execution flow, patterns, antipatterns, and performance baselines.

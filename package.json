@@ -19,6 +19,7 @@
     "agartha:binance:dev": "tsx src/binanceAgarthaRunner.ts",
     "audit:binance": "tsx src/checkBinanceAccount.ts",
     "fetch:alpha": "tsx src/fetchAlphaCatalog.ts",
+    "agartha:binance:purge": "tsx src/purgeAgarthaState.ts",
     "agartha:binance:restart": "npm run build && (npx pm2 restart helena-agartha-binance || npx pm2 start dist/binanceAgarthaRunner.js --name helena-agartha-binance)"
   },
   "keywords": [

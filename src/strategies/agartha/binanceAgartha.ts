@@ -22,7 +22,6 @@ export interface BinanceAgarthaConfig {
   trailingEntryPct: number;
   trailingExitPct: number;
   activationProfitPct: number;
-  minProfitPct: number;
   maxHoldingMinutes: number;
   maxConcurrentPositions: number; // Límite para atajar la restricción de capital
 }
@@ -218,13 +217,8 @@ export class BinanceAgarthaStrategy {
             log.info(`[${marketSymbol}] Trailing Stop: Entrada=$${state.entryPrice.toFixed(4)} | Peak=$${state.peakPrice.toFixed(4)} | Piso=$${trailingFloor.toFixed(4)} | Caída=${dropFromPeakPct.toFixed(2)}% | Profit=${totalProfitPct.toFixed(2)}%`);
 
             if (currentPrice <= trailingFloor) {
-              // Verificar si tenemos la ganancia mínima para liquidar con Trailing Stop
-              if (totalProfitPct >= this.config.minProfitPct) {
-                log.warn(`📉 Trailing Stop gatillado para ${marketSymbol}. Ejecutando venta...`);
-                await this.executeExitSell(symbolUpper, currentPrice, 'TRAILING_STOP');
-              } else {
-                log.warn(`⚠️ Piso de Trailing superado pero profit (${totalProfitPct.toFixed(2)}%) < minProfit (${this.config.minProfitPct}%). Manteniendo posición.`);
-              }
+              log.warn(`📉 Trailing Stop gatillado para ${marketSymbol}. Ejecutando venta...`);
+              await this.executeExitSell(symbolUpper, currentPrice, 'TRAILING_STOP');
             }
           } else {
             log.info(`[${marketSymbol}] En posición: Entrada=$${state.entryPrice.toFixed(4)} | Pico=$${state.peakPrice.toFixed(4)} | TargetAct=$${profitThreshold.toFixed(4)}`);
