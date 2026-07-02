@@ -15,9 +15,11 @@
 - **Structured Logging Only:** Never use `console.log/warn/error` directly. Always use `createLogger('ModuleName')` for consistent timestamp + level formatting.
 - **Cooldown Enforcement:** All strategies must respect a minimum cooldown between order placement cycles to avoid flooding the network.
 - **Tick Safety:** Strategy ticks should be wrapped with a timeout guard to prevent indefinite hangs from unresponsive RPC calls.
+- **CEX Spot Trading Fees (Asset Deduction):** On centralized exchanges (like Binance), buying an asset often incurs a trading fee (e.g. 0.1%) deducted directly from the purchased asset itself. This results in a slightly smaller wallet balance than the filled order quantity. When placing sell orders (e.g., Trailing Exit or Stop Loss), always query the actual free balance of the token first and execute the minimum of the expected position size and the actual balance (`Math.min(positionQty, freeAsset)`) to avoid `insufficient balance` errors.
 
 ## Architecture Reference
 - See `docs/ARCHITECTURE.md` for full execution flow, patterns, antipatterns, and performance baselines.
+- See `docs/AGARTHA_PATTERNS_ANTIPATTERNS.md` for CEX Alpha execution patterns, fee adjustments, and crash recovery.
 
 ## Interaction Flow & Strategy Assembly
 - **Operator Workflow**: When the user requests a bot/strategy assembly (arbitrage first), the agent must formulate the design, ask ONLY for necessary API keys/credentials and minimum funding requirements, configure/compile the codebase, run the bot in a task, and actively manage/monitor execution statistics (logs, P&L, risk) in real time.

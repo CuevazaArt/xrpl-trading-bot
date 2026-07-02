@@ -52,6 +52,12 @@ AGARTHA_MAX_CONCURRENT_POSITIONS=30     # Límite de control de capital (máximo
 
 ---
 
+## 🚨 Comisiones de Trading (Deducción en Activo)
+
+En Binance Spot, las compras cobran la comisión del 0.1% sobre el activo adquirido. La estrategia descuenta automáticamente estas comisiones consultando el saldo en tiempo real antes de enviar órdenes de venta, evitando fallos por balance insuficiente (`insufficient balance`).
+
+---
+
 ## Despliegue y Ejecución Persistente
 
 Para ejecutar esta instancia aislada de forma persistente en segundo plano (incluso reanudable en otros servidores mediante la copia de `data/helena.db`):

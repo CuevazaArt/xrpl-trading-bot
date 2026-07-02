@@ -316,9 +316,31 @@ export class BinanceAgarthaStrategy {
       return;
     }
 
-    // Formatear cantidad de salida
+    let targetQty = state.positionQty;
+
+    // Obtener balance real del activo en la cuenta Spot para evitar fallos por comisiones del exchange retenidas (0.1% fee)
+    try {
+      const balances = await this.client.getBalances();
+      const freeAsset = balances[symbol.toUpperCase()] || 0;
+      if (freeAsset < targetQty) {
+        log.warn(`[${marketSymbol}] Ajustando cantidad de venta por comisiones retenidas del exchange: ${targetQty} -> ${freeAsset}`);
+        targetQty = freeAsset;
+      }
+    } catch (balErr: any) {
+      log.error(`[${marketSymbol}] Error consultando balances antes de vender (usando estimación local):`, balErr.message || balErr);
+    }
+
+    // Formatear cantidad de salida ajustada a stepSize
+    const targetQtyFloored = Math.floor(targetQty / filter.stepSize) * filter.stepSize;
     const qtyPrecision = Math.max(0, Math.round(-Math.log10(filter.stepSize)));
-    const formattedQty = state.positionQty.toFixed(qtyPrecision);
+    const formattedQty = targetQtyFloored.toFixed(qtyPrecision);
+
+    // Si la cantidad de venta redondeada baja de las reglas del stepSize, resetear y omitir
+    if (parseFloat(formattedQty) <= 0) {
+      log.error(`[${marketSymbol}] Cantidad de salida calculada ($${formattedQty}) es inválida para liquidación. Reseteando estado.`);
+      this.resetSymbolState(symbol, currentPrice);
+      return;
+    }
 
     log.warn(`[${marketSymbol}] Colocando orden de venta a mercado de ${formattedQty} ${symbol} por ${reason}...`);
     
