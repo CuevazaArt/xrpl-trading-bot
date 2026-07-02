@@ -22,6 +22,16 @@ function parseEnvConfig() {
     binanceApiSecret: process.env.BINANCE_API_SECRET || '',
     binanceBaseUrl: process.env.BINANCE_BASE_URL || 'https://api.binance.com',
     
+    // Binance Web3 API (para swaps DeFi)
+    binanceWeb3ApiKey: process.env.BINANCE_WEB3_API_KEY || '',
+    binanceWeb3ApiSecret: process.env.BINANCE_WEB3_API_SECRET || '',
+    
+    // Hot Wallets Web3 (Agartha DeFi)
+    evmPrivateKey: process.env.EVM_PRIVATE_KEY || null,
+    evmWalletAddress: process.env.EVM_WALLET_ADDRESS || '',
+    solanaPrivateKey: process.env.SOLANA_PRIVATE_KEY || null,
+    solanaWalletAddress: process.env.SOLANA_WALLET_ADDRESS || '',
+    
     // Parámetros de Dorothy (DCA Long)
     dorothyProfitFactor: parseFloat(process.env.DOROTHY_PROFIT_FACTOR || '0.05'),
     dorothyMarginDropFactor: parseFloat(process.env.DOROTHY_MARGIN_DROP_FACTOR || '0.03'),

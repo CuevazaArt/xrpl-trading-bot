@@ -20,7 +20,10 @@
     "audit:binance": "tsx src/checkBinanceAccount.ts",
     "fetch:alpha": "tsx src/fetchAlphaCatalog.ts",
     "agartha:binance:purge": "tsx src/purgeAgarthaState.ts",
-    "agartha:binance:restart": "npm run build && (npx pm2 restart helena-agartha-binance || npx pm2 start dist/binanceAgarthaRunner.js --name helena-agartha-binance)"
+    "agartha:binance:restart": "npm run build && (npx pm2 restart helena-agartha-binance || npx pm2 start dist/binanceAgarthaRunner.js --name helena-agartha-binance)",
+    "agartha:defi": "tsc && node dist/binanceWeb3AgarthaRunner.js",
+    "agartha:defi:dev": "tsx src/binanceWeb3AgarthaRunner.ts",
+    "agartha:defi:restart": "npm run build && (npx pm2 restart helena-agartha-defi || npx pm2 start dist/binanceWeb3AgarthaRunner.js --name helena-agartha-defi)"
   },
   "keywords": [
     "xrpl",
@@ -32,7 +35,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@solana/web3.js": "^1.98.4",
+    "bs58": "^6.0.0",
     "dotenv": "^16.4.5",
+    "ethers": "^6.17.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^6.0.1",
     "xrpl": "^3.0.0"

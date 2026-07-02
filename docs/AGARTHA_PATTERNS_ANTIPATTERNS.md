@@ -31,6 +31,12 @@ Este documento compila el conocimiento de resiliencia, restricciones de red y ge
 *   **Contexto**: Los activos del catálogo Alpha de Binance tienen altísima volatilidad.
 *   **Patrón**: La estrategia debe depender exclusivamente del trailing stop dinámico desde el pico (`trailingExitPct`) y de un limitador temporal (`maxHoldingMinutes`). No se deben incorporar restricciones adicionales de ganancias mínimas (`minProfitPct`), stop loss fijos o lógicas de break-even. El bot asume y compensa pequeñas pérdidas potenciales con las ganancias masivas y asimétricas capturadas en los grandes "pumpeos".
 
+### 6. Resiliencia ante Purgas Offline y Gestión de Estados Huérfanos
+*   **Contexto**: Durante el mantenimiento del bot o al realizar purgas de base de datos para depurar configuraciones, los estados de posiciones activas se eliminan del almacenamiento local (SQLite). Sin embargo, los saldos físicos de los tokens (adquiridos por el bot en ciclos previos) siguen presentes en la billetera Spot de Binance.
+*   **Patrón**: 
+    1. **Restauración Asistida**: Ante una purga deliberada, se debe ejecutar un proceso de recuperación offline que lea los últimos estados registrados en logs (precio de entrada, cantidad, pico histórico) y los reinserte en la base de datos antes de reanudar el runner.
+    2. **Control de Inventario**: El bot debe contar con un mecanismo de alerta de activos "huérfanos" (balances positivos del Spot Wallet para tokens Alpha que no tienen un estado registrado en memoria/DB) para evitar que posiciones queden sin la protección del trailing stop.
+
 ---
 
 ## ─── ANTIPATRONES OPERACIONALES (ERRORES A EVITAR) ───
