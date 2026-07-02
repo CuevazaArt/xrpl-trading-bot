@@ -63,21 +63,25 @@ Dado que todos los datos están en `data/helena.db`, **el bot puede apagarse y e
 
 Si necesitas mudar el bot a otra máquina o VPS sin perder el historial ni cerrar posiciones activas, sigue estos pasos:
 
-1. **Compromiso de ticks**: Detén el proceso en el servidor de origen:
+1. **Detener el proceso original**: Detén el bot en el servidor de origen para evitar ticks concurrentes en la misma cuenta:
    ```bash
+   # Con PM2 global:
    pm2 stop helena-agartha-binance
+   # o con npx:
+   npx pm2 stop helena-agartha-binance
    ```
-2. **Copiar Base de Datos**: Copia el directorio `data/` completo (que contiene `helena.db`) de tu servidor actual. **Este archivo contiene todo el estado de la sesión activa.**
-3. **Transferir Código y Configuración**: Copia los archivos del bot, incluyendo tu `.env` con las credenciales de la subcuenta de Binance.
+2. **Copiar Base de Datos**: Copia el directorio `data/` completo (que contiene `helena.db`) de tu servidor actual. **Este archivo contiene todo el estado y posicionamiento activo.**
+3. **Transferir Código y Configuración**: Copia los archivos del bot al nuevo servidor, incluyendo tu `.env` con las credenciales correspondientes.
 4. **Pegar en el Servidor de Destino**:
    * Pega la carpeta del bot en la nueva máquina.
    * Coloca el archivo `helena.db` copiado en el directorio `data/` del nuevo servidor.
-5. **Iniciar en Destino**:
+5. **Iniciar/Restaurar de un solo comando en el Destino**:
+   Instala dependencias y ejecuta el comando unificado de restauración:
    ```bash
    npm install
-   npm run build
-   pm2 start dist/binanceAgarthaRunner.js --name "helena-agartha-binance"
+   npm run agartha:binance:restart
    ```
+   *Nota: Este comando compilará el código y ordenará a PM2 reiniciar el proceso si ya existía, o crearlo desde cero si es la primera vez en el servidor, recuperando inmediatamente el estado persistente.*
    El bot leerá `data/helena.db` y retomará el monitoreo de los mismos activos en el punto exacto de forma persistente.
 
 ---

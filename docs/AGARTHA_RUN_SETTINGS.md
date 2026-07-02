@@ -37,6 +37,16 @@ La instancia aislada de **Helena** corriendo bajo el proceso PM2 `helena-agartha
 
 ---
 
+## 🔄 Comando de Reinicio Continuo / Failover
+
+Para reiniciar el bot en caliente (compilando y recargando el proceso PM2 sin perder estados) o para levantarlo tras una migración de servidor, ejecuta el siguiente indicador/comando unificado:
+```bash
+npm run agartha:binance:restart
+```
+*(Este comando automatiza: 1. Compilación `tsc`, 2. Recarga en PM2 si ya existía, o 3. Inicio del Daemon si es la primera vez, todo restaurando el estado de posiciones de `data/helena.db`)*.
+
+---
+
 ## 🏷️ Control de Versiones y Tagging de Git
 
 Esta versión instanciada de Agartha ha sido documentada y empaquetada. Para registrar los cambios locales y crear la etiqueta (**Git Tag**) de liberación oficial en tu repositorio remoto, ejecuta los siguientes comandos en tu terminal local:
