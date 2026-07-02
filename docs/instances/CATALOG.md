@@ -49,6 +49,7 @@
 | ID | Nombre | Estrategia | Conector | Activos | Ficha |
 |----|--------|-----------|----------|---------|:-----:|
 | 001 | **Helena × Kyoto :: Sashimi** | Helena (MM + IOC) | Kyoto (XRPL DEX) | Sashimi (XRP/USD) | [📄](./instances/001_helena_kyoto_sashimi.md) |
+| 005 | **Agartha × Shanghai :: Dim Sum** | Agartha (Trailing) | Shanghai (Binance) | Dim Sum (Alpha Market) | [📄](./instances/005_agartha_shanghai_ratatouille.md) |
 
 ### 🔜 Próximas
 
@@ -57,7 +58,6 @@
 | 002 | **Helena × Shanghai :: Nigiri** | Helena (MM) | Shanghai (Binance) | Nigiri (XRP/USDT) |
 | 003 | **Dorothy × Kyoto :: Sashimi** | Dorothy (DCA Long) | Kyoto (XRPL DEX) | Sashimi (XRP/USD) |
 | 004 | **Dorothy × Shanghai :: Wagyu** | Dorothy (DCA Long) | Shanghai (Binance) | Wagyu (BTC/USDT) |
-| 005 | **Agartha × Shanghai :: Ratatouille** | Agartha (Trailing) | Shanghai (Binance) | Ratatouille (ETH/USDT) |
 | 006 | **Arbitrage × Kyoto↔Shanghai :: Sashimi** | Arbitrage (2-leg) | Kyoto ↔ Shanghai | Sashimi (XRP) |
 
 ### 🔮 Futuras

@@ -1,6 +1,6 @@
-# 005 — Agartha × Shanghai :: Ratatouille
+# 005 — Agartha × Shanghai :: Dim Sum (Alpha Market)
 
-> **Trailing Stop Entry en Binance con ETH/USDT**
+> **Trailing Stop de Compra y Venta en Binance con Tokens Alpha (USDT)**
 
 ---
 
@@ -9,81 +9,60 @@
 | Campo | Valor |
 |-------|-------|
 | **ID** | 005 |
-| **Nombre** | Agartha × Shanghai :: Ratatouille |
-| **Estrategia** | Agartha (Trailing Stop Entry + Exit) |
-| **Conector** | Shanghai (Binance) |
-| **Activos** | Ratatouille (ETH/USDT) |
-| **Estado** | 🔜 Requiere BinanceConnector + migración IStrategyV2 |
-| **Riesgo** | Medio-Alto (trend-following, pierde en laterales) |
-| **Capital mínimo** | $300 USDT |
-| **Capital recomendado** | $1,000+ USDT |
+| **Nombre** | Agartha × Shanghai :: Dim Sum |
+| **Estrategia** | Agartha (Trailing Stop Buy + Trailing Stop Sell) |
+| **Conector** | Shanghai (Binance Spot Client) |
+| **Activos** | Dim Sum (Canasta de Tokens Alpha: FARM, POND, BOB, TA, etc.) |
+| **Estado** | ✅ Operativo (Instancia Aislada) |
+| **Riesgo** | Alto (activos altamente volátiles y de baja capitalización) |
+| **Nocional por activo** | $10 USDT fijo |
+| **Capital Mínimo** | `(N * 10 USDT) * 1.05` |
 
 ---
 
 ## ¿Qué hace?
 
-Agartha es una estrategia de **momentum/trend-following** con trailing stop. Funciona en 2 fases:
+Esta instancia corre de forma **aislada** y audita la oferta y precio de todos los símbolos pertenecientes al sector **Alpha** en Binance Spot. Funciona en 2 fases automatizadas por símbolo:
 
 ### Fase 1: Entrada (Trailing Stop Buy)
-```
-Precio baja → Agartha espera
-Precio toca mínimo y rebota +X% → COMPRA (confirma reversal)
-```
+Monitorea continuamente la cotización masiva. Si un token toca un mínimo y rebota un porcentaje configurado (ej: 2%), ejecuta una compra a mercado de **10 USDT** para capturar el mechazo inicial.
 
 ### Fase 2: Salida (Trailing Stop Sell)
-```
-Precio sube → Trailing stop sigue el precio a distancia
-Precio cae X% desde máximo → VENDE (protege ganancias)
-```
-
-### ¿Por qué Ratatouille (ETH)?
-
-- **Tendencias claras**: ETH tiende a moverse en swings de 10-20%
-- **Complejidad multicapa**: Como el ratatouille, ETH tiene múltiples capas (DeFi, NFTs, L2s) que generan narrativas y momentum
-- **Volatilidad ideal**: Más volátil que BTC, menos que altcoins — sweet spot para trailing
+Una vez dentro de la posición:
+1. Rastrea el precio máximo alcanzado (`peakPrice`).
+2. Activa el trailing una vez superado el umbral mínimo de ganancia.
+3. Si el precio retrocede un porcentaje establecido (ej: 3%) desde su máximo local, liquida la posición a mercado protegiendo la rentabilidad.
 
 ---
 
 ## Configuración `.env`
 
+Ajusta tu archivo `.env` con los siguientes parámetros persistentes (los símbolos se obtienen dinámicamente llamando a `npm run fetch:alpha`):
+
 ```bash
-STRATEGY=agartha
-CONNECTOR=binance
-
-BINANCE_API_KEY=tu_key
-BINANCE_API_SECRET=tu_secret
-
-TRADING_PAIR_BASE=ETH
-TRADING_PAIR_QUOTE=USDT
-
-# Trailing params
-AGARTHA_TRAILING_ENTRY_PCT=5.0    # Comprar cuando rebota 5% desde mínimo
-AGARTHA_TRAILING_EXIT_PCT=3.0     # Vender cuando cae 3% desde máximo
-AGARTHA_MIN_PROFIT_PCT=2.0        # No vender si profit < 2%
-AGARTHA_ORDER_AMOUNT=0.1          # 0.1 ETH por trade
-
-MM_MAX_LOSS_USD=50.0
+# Parámetros operativos
+AGARTHA_BINANCE_NOTIONAL=10.0           # Nocional fijo de 10 USDT por posición
+AGARTHA_TRAILING_ENTRY_PCT=2.0          # Rebote de 2% desde mínimos para comprar
+AGARTHA_TRAILING_EXIT_PCT=3.0           # Caída de 3% desde máximos para vender
+AGARTHA_ACTIVATION_PROFIT_PCT=1.5       # Ganancia para activar trailing de salida
+AGARTHA_MIN_PROFIT_PCT=1.0              # Beneficio mínimo para permitir salida por trailing
+AGARTHA_MAX_HOLDING_MINUTES=60          # Time Stop de 1 hora para liquidar posiciones estancadas
+AGARTHA_MAX_CONCURRENT_POSITIONS=30     # Límite de control de capital (máximo 30 posiciones)
 ```
 
 ---
 
-## Cuándo usar Agartha
+## Despliegue y Ejecución Persistente
 
-| Escenario | ¿Usar? |
-|-----------|:------:|
-| Mercado con tendencia clara (bull o bear) | ✅ Ideal |
-| Mercado lateral/ranging | ❌ Genera whipsaws |
-| Volatilidad extrema (>10% diario) | ⚠️ Reducir trailing % |
-| Volatilidad baja (<2% diario) | ❌ No genera entries |
+Para ejecutar esta instancia aislada de forma persistente en segundo plano (incluso reanudable en otros servidores mediante la copia de `data/helena.db`):
 
----
+```bash
+# Compilar y arrancar localmente
+npm run agartha:binance
 
-## Dependencia
+# Ejecutar de forma persistente con PM2
+pm2 start dist/binanceAgarthaRunner.js --name "helena-agartha-binance"
+```
 
-- Requiere: `BinanceConnector` (Fase 4) + Agartha migrada a `IStrategyV2` (Fase 6)
-
-## Archivos Relevantes
-
-| Archivo | Descripción |
-|---------|-------------|
-| [agartha.ts](file:///c:/Users/lexar/Desktop/xrpL/src/strategies/agartha.ts) | Estrategia completa |
+Para más detalles sobre la persistencia y migración de estados, consulta la guía:
+👉 [docs/AGARTHA_BINANCE_PERSISTENCE.md](../AGARTHA_BINANCE_PERSISTENCE.md)
