@@ -33,6 +33,7 @@ export class BinanceAgarthaStrategy {
   private states: Record<string, BinanceAgarthaSymbolState> = {};
   private filters: Record<string, BinanceSymbolFilter> = {};
   private blacklist: string[] = ['PUMP', 'FUN', 'SCAM', 'RUG'];
+  private lastEquityLogTimestamp = 0;
 
   constructor(client: BinanceSpotClient, config: BinanceAgarthaConfig) {
     this.client = client;
@@ -96,6 +97,9 @@ export class BinanceAgarthaStrategy {
       log.warn('No se recibieron cotizaciones de Binance en este tick. Omitiendo ciclo.');
       return;
     }
+
+    // 1.2 Reporte de balances y equity en caliente
+    await this.logEquitySummary(prices);
 
     // 2. Contar posiciones activas locales actuales
     let activePositionsCount = 0;
@@ -229,6 +233,55 @@ export class BinanceAgarthaStrategy {
       } catch (err: any) {
         log.error(`❌ Error al procesar símbolo ${marketSymbol} en este tick:`, err.message || err);
       }
+    }
+  }
+
+  private async logEquitySummary(prices: Record<string, number>): Promise<void> {
+    const now = Date.now();
+    // Limitar logs de balance y equity a una vez cada 60 segundos para evitar spam
+    if (now - this.lastEquityLogTimestamp < 60000) {
+      return;
+    }
+    this.lastEquityLogTimestamp = now;
+
+    try {
+      const balances = await this.client.getBalances();
+      const freeUsdt = balances['USDT'] || 0;
+      let totalPositionValueUsdt = 0;
+      const activePositionsInfo: string[] = [];
+
+      for (const symbol of this.config.symbols) {
+        const symbolUpper = symbol.toUpperCase();
+        const marketSymbol = `${symbolUpper}USDT`;
+        const state = this.states[symbolUpper];
+
+        if (state && state.positionQty > 0) {
+          const price = prices[marketSymbol] || state.entryPrice;
+          const value = state.positionQty * price;
+          totalPositionValueUsdt += value;
+          const pnlPct = ((price - state.entryPrice) / state.entryPrice) * 100;
+          activePositionsInfo.push(`${symbolUpper}: ${state.positionQty.toFixed(4)} (~${value.toFixed(2)} USDT, PnL: ${pnlPct.toFixed(2)}%)`);
+        }
+      }
+
+      const totalEquity = freeUsdt + totalPositionValueUsdt;
+      
+      log.warn(`=====================================================================`);
+      log.warn(`💰 REPORTE DE SALDOS Y EQUITY GENERAL (HELENA × SHANGHAI)`);
+      log.warn(`   • Equity Total (Valor de Cuenta): $${totalEquity.toFixed(2)} USDT`);
+      log.warn(`   • Saldo USDT Disponible (Libre):  $${freeUsdt.toFixed(2)} USDT`);
+      log.warn(`   • Valor en Activos (Posición):     $${totalPositionValueUsdt.toFixed(2)} USDT`);
+      if (activePositionsInfo.length > 0) {
+        log.info(`   • Detalle de Posiciones Activas:`);
+        for (const posInfo of activePositionsInfo) {
+          log.info(`     - ${posInfo}`);
+        }
+      } else {
+        log.info(`   • Sin posiciones activas.`);
+      }
+      log.warn(`=====================================================================`);
+    } catch (err: any) {
+      log.error('Error al generar el reporte de Equity:', err.message || err);
     }
   }
 
