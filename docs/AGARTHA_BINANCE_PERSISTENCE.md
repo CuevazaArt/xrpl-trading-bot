@@ -10,26 +10,36 @@ Para garantizar que el bot siga ejecutándose en segundo plano y se reinicie aut
 
 ### 1. Requisitos Previos
 * Tener instalado Node.js (v18 o superior).
-* Instalar PM2 de forma global:
+* Instalar PM2 de forma global (opcional):
   ```bash
   npm install -g pm2
   ```
+  *Nota: Si no tienes permisos de Administrador o `pm2` no se reconoce, puedes usar el prefijo `npx` (ej: `npx pm2 ...`) para ejecutarlo directamente sin instalación global.*
 
 ### 2. Iniciar el Proceso
 Primero compile el proyecto y luego inicie el runner con PM2:
 ```bash
 npm run build
+
+# Si tienes PM2 global:
 pm2 start dist/binanceAgarthaRunner.js --name "helena-agartha-binance"
+
+# Si usas npx (sin instalación global):
+npx pm2 start dist/binanceAgarthaRunner.js --name "helena-agartha-binance"
 ```
 
 ### 3. Monitoreo y Logs
 * Ver el estado del bot en tiempo real:
   ```bash
   pm2 status
+  # o con npx:
+  npx pm2 status
   ```
 * Ver los logs continuos:
   ```bash
   pm2 logs helena-agartha-binance
+  # o con npx:
+  npx pm2 logs helena-agartha-binance
   ```
 * Configurar inicio automático con el sistema:
   ```bash
